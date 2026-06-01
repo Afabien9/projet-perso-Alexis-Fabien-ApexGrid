@@ -1,0 +1,178 @@
+[
+ {
+    "round": "1",
+    "name": "Grand Prix d'Australie",
+    "circuit": "Albert Park Circuit",
+    "date": "02 Mars 2026",
+    "location": "Melbourne",
+    "trackImageUrl": "/Track/australie.avif"
+  },
+  {
+    "round": "2",
+    "name": "Grand Prix de Chine",
+    "circuit": "Shanghai International Circuit",
+    "date": "13-15 Mars 2026",
+    "location": "Shanghai",
+    "trackImageUrl": "/Track/chine.avif"
+  },
+  {
+    "round": "3",
+    "name": "Grand Prix du Japon",
+    "circuit": "Suzuka International Racing Course",
+    "date": "27-29 Mars 2026",
+    "location": "Suzuka",
+    "trackImageUrl": "/Track/japon.avif"
+  },
+  {
+    "round": "4",
+    "name": "Grand Prix de Miami",
+    "circuit": "Miami International Autodrome",
+    "date": "1-3 Mai 2026",
+    "location": "Miami",
+    "trackImageUrl": "/Track/miami.avif"
+  },
+  {
+    "round": "5",
+    "name": "Grand Prix du Canada",
+    "circuit": "Circuit Gilles-Villeneuve",
+    "date": "22-24 Mai 2026",
+    "location": "Montréal",
+    "trackImageUrl": "/Track/canada.avif"
+  },
+  {
+    "round": "6",
+    "name": "Grand Prix de Monaco",
+    "circuit": "Circuit de Monaco",
+    "date": "5-7 Juin 2026",
+    "location": "Monte-Carlo",
+    "trackImageUrl": "/Track/monaco.avif"
+  },
+  {
+    "round": "7",
+    "name": "Grand Prix d'Espagne",
+    "circuit": "Circuit de Barcelona-Catalunya",
+    "date": "12-14 Juin 2026",
+    "location": "Barcelone",
+    "trackImageUrl": "/Track/barcelone.avif"
+  },
+  {
+    "round": "8",
+    "name": "Grand Prix d'Autriche",
+    "circuit": "Red Bull Ring",
+    "date": "26-28 Juin 2026",
+    "location": "Spielberg",
+    "trackImageUrl": "/Track/autriche.avif"
+  },
+  {
+    "round": "9",
+    "name": "Grand Prix de Grande-Bretagne",
+    "circuit": "Silverstone Circuit",
+    "date": "3-5 Juillet 2026",
+    "location": "Silverstone",
+    "trackImageUrl": "/Track/angleterre.avif"
+  },
+  {
+    "round": "10",
+    "name": "Grand Prix de Belgique",
+    "circuit": "Circuit de Spa-Francorchamps",
+    "date": "17-19 Juillet 2026",
+    "location": "Spa-Francorchamps",
+    "trackImageUrl": "/Track/belgique.avif"
+  },
+  {
+    "round": "11",
+    "name": "Grand Prix d'Hongrie",
+    "circuit": "Hungaroring",
+    "date": "24-26 Juillet 2026",
+    "location": "Budapest",
+    "trackImageUrl": "/Track/hongrie.avif"
+  },
+  {
+    "round": "12",
+    "name": "Grand Prix des Pays-Bas",
+    "circuit": "Circuit Zandvoort",
+    "date": "21-23 Août 2026",
+    "location": "Zandvoort",
+    "trackImageUrl": "/Track/pays-bas.avif"
+  },
+  {
+    "round": "13",
+    "name": "Grand Prix d'Italie",
+    "circuit": "Autodromo Nazionale Monza",
+    "date": "4-6 Septembre 2026",
+    "location": "Monza",
+    "trackImageUrl": "/Track/italie.avif"
+  },
+  {
+    "round": "14",
+    "name": "Grand Prix de Madrid",
+    "circuit": "Circuit urbain de Madrid",
+    "date": "11-13 Septembre 2026",
+    "location": "Madrid",
+    "trackImageUrl": "/Track/madrid.avif"
+  },
+  {
+    "round": "15",
+    "name": "Grand Prix d'Azerbaïdjan",
+    "circuit": "Baku City Circuit",
+    "date": "25-27 Septembre 2026",
+    "location": "Bakou",
+    "trackImageUrl": "/Track/baku.avif"
+  },
+  {
+    "round": "16",
+    "name": "Grand Prix de Singapour",
+    "circuit": "Marina Bay Street Circuit",
+    "date": "9-11 Octobre 2026",
+    "location": "Singapour",
+    "trackImageUrl": "/Track/singapore.avif"
+  },
+  {
+    "round": "17",
+    "name": "Grand Prix des États-Unis",
+    "circuit": "Circuit of the Americas",
+    "date": "23-25 Octobre 2026",
+    "location": "Austin",
+    "trackImageUrl": "/Track/usa.avif"
+  },
+  {
+    "round": "18",
+    "name": "Grand Prix du Mexique",
+    "circuit": "Autódromo Hermanos Rodríguez",
+    "date": "30 Octobre - 1 Novembre 2026",
+    "location": "Mexico",
+    "trackImageUrl": "/Track/mexique.avif"
+  },
+  {
+    "round": "19",
+    "name": "Grand Prix de São Paulo",
+    "circuit": "Autódromo José Carlos Pace",
+    "date": "6-8 Novembre 2026",
+    "location": "São Paulo",
+    "trackImageUrl": "/Track/bresil.avif"
+  },
+  {
+    "round": "20",
+    "name": "Grand Prix de Las Vegas",
+    "circuit": "Las Vegas Strip Circuit",
+    "date": "19-21 Novembre 2026",
+    "location": "Las Vegas",
+    "trackImageUrl": "/Track/las-vegas.avif"
+  },
+  {
+    "round": "21",
+    "name": "Grand Prix du Qatar",
+    "circuit": "Lusail International Circuit",
+    "date": "27-29 Novembre 2026",
+    "location": "Lusail",
+    "trackImageUrl": "/Track/quatar.avif"
+  },
+  {
+    "round": "22",
+    "name": "Grand Prix d'Abou Dabi",
+    "circuit": "Yas Marina Circuit",
+    "date": "4-6 Décembre 2026",
+    "location": "Abou Dabi",
+    "trackImageUrl": "/Track/abu-dhabi.avif"
+  }
+]

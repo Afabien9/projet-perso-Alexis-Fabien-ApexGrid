@@ -1,0 +1,45 @@
+F1_FANTASY_ANALYTICS/
+├── backend/                        # CŒUR LOGIQUE (Node.js + Express)
+│   ├── src/
+│   │   ├── config/                 # Clés API & Database
+│   │   ├── controllers/            # Routes & Logique métier
+│   │   ├── middleware/             # Sécurité & JWT
+│   │   ├── models/                 # Interfaces TS (User, Driver)
+│   │   ├── services/               # ScoringEngine.ts (Bonus & Duels)
+│   │   └── index.ts                # Point d'entrée serveur
+│   ├── .env                        # Secrets & Variables
+│   ├──tsconfig.json               # Config TypeScript Backend
+│   └──data
+│       │
+│       ├── drivers.json           // Liste complète des pilotes (Référentiel)
+│       ├── constructors.json      // Liste des écuries (Référentiel)
+│       ├── standings_elite.json   // Top 5 pour le malus
+│       ├── standings_bottom.json  // Fond de grille pour le bonus
+│       └── /results/              // Un fichier par course
+│           ├── 2026_1.json
+│           ├── 2026_2.json
+│           └── ...
+│
+├── frontend/                       # INTERFACE VISUELLE (React + Vite)
+│   ├── public/                     # Fichiers statiques (favicon, etc.)
+│   ├── src/
+│   │   ├── assets/                 # Logos écuries & Styles CSS
+│   │   ├── components/
+│   │   │   ├── charts/             # Graphiques (Radar, Line)
+│   │   │   ├── fantasy/            # ScoreCard.tsx, DriverSelection
+│   │   │   └── ui/                 # Indicateurs (Flèches, Badges)
+│   │   ├── hooks/                  # Logique de récupération des scores
+│   │   ├── pages/                  # Dashboard.tsx, Market.tsx
+│   │   ├── services/               # Appels API (ApiService.ts)
+│   │   ├── types/                  # ScoreDetail.ts (PointDetail)
+│   │   ├── App.tsx                 # Composant racine (Layout & Routes)
+│   │   ├── main.tsx                # Lanceur (ReactDOM.render)
+│   │   └── index.css               # Directives Tailwind CSS
+│   ├── index.html                  # Point d'entrée navigateur
+│   ├── vite.config.ts              # Moteur de compilation
+│   ├── tsconfig.json               # Config TypeScript Frontend
+│   ├── tailwind.config.js          # Config design Tailwind
+│   └── .env                        # URL du Backend (http://localhost:3000)
+│
+└── shared/                         # PARTAGE (Interfaces communes)
+    └── Driver.ts                   # Types utilisés par le Back et le Front
