@@ -16,7 +16,11 @@ interface GrandPrixCalendar {
   location: string;
 }
 
-export const LeaderboardPage: React.FC = () => {
+interface LeaderboardPageProps {
+  onBack: () => void;
+}
+
+export const LeaderboardPage: React.FC<LeaderboardPageProps> = ({ onBack }) => {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [calendar, setCalendar] = useState<GrandPrixCalendar[]>([]);
   const [selectedRound, setSelectedRound] = useState<string>("season"); // "season" ou numéro du round ("1", "2"...)
@@ -74,15 +78,27 @@ export const LeaderboardPage: React.FC = () => {
 
   return (
     <div className="w-full min-h-screen bg-slate-950 text-white p-4 md:p-12 font-sans">
+      {/* RETOUR TECHNIQUE STYLE PADDOCK */}
+      <div className="max-w-6xl mx-auto mb-6">
+        <button
+          onClick={onBack}
+          className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest px-4 py-2.5 rounded bg-slate-900 border border-slate-800 text-slate-400 hover:border-red-600 hover:text-white transition-all cursor-pointer group skew-x-[-10deg]"
+        >
+          <span className="inline-block transform skew-x-[10deg]">
+            ← RETOUR
+          </span>
+        </button>
+      </div>
+
       {/* En-tête de page haut de gamme */}
       <header className="max-w-6xl mx-auto mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-slate-900 pb-6">
         <div className="border-l-4 border-red-600 pl-5 space-y-1">
           <h1 className="text-4xl md:text-5xl font-black italic uppercase tracking-tighter">
-            Classement <span className="text-red-600 drop-shadow-[0_0_10px_rgba(220,38,38,0.3)]">Général</span>
+            Classement{" "}
+            <span className="text-red-600 drop-shadow-[0_0_10px_rgba(220,38,38,0.3)]">
+              Général
+            </span>
           </h1>
-          <p className="text-[10px] font-mono text-slate-500 uppercase tracking-widest">
-            // Ligue Fantasy ApexGrid // Session de calcul globale
-          </p>
         </div>
 
         {/* Boutons d'activation rapides */}
@@ -107,7 +123,9 @@ export const LeaderboardPage: React.FC = () => {
               }}
               className="bg-slate-900 border border-slate-800 text-slate-300 px-4 py-2 rounded-lg text-xs font-mono uppercase tracking-wide focus:outline-none focus:border-red-600 transition-colors cursor-pointer appearance-none pr-8"
             >
-              <option value="" disabled>🏁 Par Grand Prix...</option>
+              <option value="" disabled>
+                🏁 Par Grand Prix...
+              </option>
               {calendar.map((gp) => (
                 <option key={gp.round} value={gp.round}>
                   R{gp.round} — {gp.name}
@@ -151,7 +169,9 @@ export const LeaderboardPage: React.FC = () => {
                 <tr className="border-b border-slate-900/80 bg-slate-900/40 text-[10px] font-mono text-slate-500 uppercase tracking-widest h-12">
                   <th className="pl-6 w-20">Rang</th>
                   <th>Manager / Joueur</th>
-                  {selectedRound !== "season" && <th className="w-96">Line-up Actif</th>}
+                  {selectedRound !== "season" && (
+                    <th className="w-96">Line-up Actif</th>
+                  )}
                   <th className="text-center w-28">Évolution</th>
                   <th className="text-right pr-8 w-40">Points Cumulés</th>
                 </tr>
@@ -162,17 +182,12 @@ export const LeaderboardPage: React.FC = () => {
                     key={row.username}
                     className="h-16 hover:bg-slate-900/30 transition-colors group"
                   >
-                    {/* Colonne Rang */}
                     <td className="pl-6 font-black font-mono italic text-lg text-slate-400 group-hover:text-white transition-colors">
                       #{row.rank}
                     </td>
-
-                    {/* Pseudo de l'utilisateur */}
                     <td className="text-base font-bold tracking-tight text-white group-hover:text-red-500 transition-colors">
                       {row.username}
                     </td>
-
-                    {/* Liste des badges pilotes tridimensionnels (Si filtre par Round actif) */}
                     {selectedRound !== "season" && (
                       <td>
                         <div className="flex items-center gap-1.5">
@@ -186,26 +201,29 @@ export const LeaderboardPage: React.FC = () => {
                               </span>
                             ))
                           ) : (
-                            <span className="text-[10px] font-mono italic text-slate-600">Aucun alignement verrouillé</span>
+                            <span className="text-[10px] font-mono italic text-slate-600">
+                              Aucun alignement verrouillé
+                            </span>
                           )}
                         </div>
                       </td>
                     )}
-
-                    {/* Flèche d'évolution de style Écurie F1 */}
                     <td className="text-center">
                       {row.rank === 1 ? (
-                        <span className="text-emerald-500 text-xs shadow-emerald-950 animate-pulse">▲</span>
+                        <span className="text-emerald-500 text-xs shadow-emerald-950 animate-pulse">
+                          ▲
+                        </span>
                       ) : row.rank % 2 === 0 ? (
                         <span className="text-red-500 text-xs">▼</span>
                       ) : (
                         <span className="text-emerald-500 text-xs">▲</span>
                       )}
                     </td>
-
-                    {/* Affichage distinctif des points cumulés */}
                     <td className="text-right pr-8 font-mono font-black italic tracking-tight text-lg text-red-500 group-hover:drop-shadow-[0_0_8px_rgba(239,68,68,0.4)] transition-all">
-                      {row.points} <span className="text-xs font-sans not-italic font-bold text-slate-500 uppercase tracking-wide ml-1">Pts</span>
+                      {row.points}{" "}
+                      <span className="text-xs font-sans not-italic font-bold text-slate-500 uppercase tracking-wide ml-1">
+                        Pts
+                      </span>
                     </td>
                   </tr>
                 ))}

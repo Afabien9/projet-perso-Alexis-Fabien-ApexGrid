@@ -21,9 +21,10 @@ interface RoundScoreResponse {
 
 interface HistoryPageProps {
   onNavigateToTeam: (roundNumber: string) => void;
+  onBack: () => void;
 }
 
-export const HistoryPage: React.FC<HistoryPageProps> = ({ onNavigateToTeam }) => {
+export const HistoryPage: React.FC<HistoryPageProps> = ({ onNavigateToTeam, onBack }) => {
   const [calendar, setCalendar] = useState<GrandPrixCalendar[]>([]);
   const [configuredRounds, setConfiguredRounds] = useState<number[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -33,7 +34,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ onNavigateToTeam }) =>
   const [roundScores, setRoundScores] = useState<RoundScoreResponse | null>(null);
   const [loadingModal, setLoadingModal] = useState<boolean>(false);
 
-  const LAST_SYNCED_ROUND = 5; 
+  const [lastSyncedRound, setLastSyncedRound] = useState<number>(6); 
 
   useEffect(() => {
     const loadData = async () => {
@@ -88,7 +89,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ onNavigateToTeam }) =>
   const handleGPClick = async (gp: GrandPrixCalendar) => {
     const roundInt = parseInt(gp.round, 10);
 
-    if (roundInt <= LAST_SYNCED_ROUND) {
+    if (roundInt <= lastSyncedRound) {
       setSelectedGP(gp);
       setLoadingModal(true);
       try {
@@ -121,11 +122,23 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ onNavigateToTeam }) =>
 
   return (
     <div className="w-full bg-slate-950 text-white p-4 md:p-10 font-sans">
+      {/* RETOUR TECHNIQUE STYLE PADDOCK */}
+      <div className="max-w-6xl mx-auto mb-6">
+        <button
+          onClick={onBack}
+          className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest px-4 py-2.5 rounded bg-slate-900 border border-slate-800 text-slate-400 hover:border-red-600 hover:text-white transition-all cursor-pointer group skew-x-[-10deg]"
+        >
+          <span className="inline-block transform skew-x-[10deg]">
+            ← RETOUR
+          </span>
+        </button>
+      </div>
+
       <header className="mb-12 max-w-6xl mx-auto border-l-4 border-red-600 pl-5">
         <h1 className="text-4xl md:text-5xl font-black italic uppercase tracking-tighter">
           Suivi de Saison <span className="text-red-600 drop-shadow-[0_0_10px_rgba(220,38,38,0.3)]">Course par Course</span>
         </h1> 
-        <p className="text-[10px] font-mono text-slate-500 uppercase tracking-widest mt-1">// Archives de scores & Alignements futurs</p>
+        
       </header>
 
       {error && (
@@ -138,7 +151,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ onNavigateToTeam }) =>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {calendar.map((item) => {
             const currentRoundInt = parseInt(item.round, 10);
-            const isPassed = currentRoundInt <= LAST_SYNCED_ROUND;
+            const isPassed = currentRoundInt <= lastSyncedRound;
             const isAlreadySelected = configuredRounds.includes(currentRoundInt);
             
             let cardStyle = "border-slate-800/80 hover:border-red-600 hover:shadow-[0_0_25px_rgba(220,38,38,0.15)]";
@@ -163,7 +176,6 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ onNavigateToTeam }) =>
                 onClick={() => handleGPClick(item)}
                 className={`group text-left relative bg-slate-900/40 border rounded-xl p-5 flex flex-col justify-between transition-all duration-300 backdrop-blur-sm overflow-hidden cursor-pointer w-full ${cardStyle}`}
               >
-                {/* En-tête de carte type Box de Télémétrie */}
                 <div className="w-full flex justify-between items-start gap-4 border-b border-slate-800/60 pb-4 mb-4 relative z-10">
                   <div className="space-y-1 min-w-0">
                     <span className="inline-block text-[9px] font-mono text-slate-500 font-black uppercase tracking-wider">
@@ -174,13 +186,10 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ onNavigateToTeam }) =>
                     </h3>
                     <span className="text-[11px] text-slate-400 font-medium block">📍 {item.location}</span>
                   </div>
-
                   <div className={`whitespace-nowrap flex-shrink-0 px-2.5 py-1.5 rounded text-[9px] font-mono font-black tracking-widest uppercase transition-all skew-x-[-10deg] border ${badgeStyle}`}>
                     {badgeText}
                   </div>
                 </div>
-
-                {/* Encadré Circuit */}
                 <div className="aspect-[21/9] w-full bg-slate-950/60 rounded-lg p-2 border border-slate-800/40 flex items-center justify-center opacity-40 group-hover:opacity-100 group-hover:scale-[1.02] transition-all duration-300 relative overflow-hidden">
                   <div className="absolute inset-0 opacity-[0.01] bg-[repeating-linear-gradient(0deg,transparent,transparent_2px,#fff_2px,#fff_4px)]" />
                   <img
@@ -199,7 +208,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ onNavigateToTeam }) =>
       {selectedGP && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-lg transition-all duration-300">
           <div className="bg-slate-950 border-2 border-slate-800 rounded-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto p-6 md:p-8 relative shadow-[0_0_50px_rgba(220,38,38,0.15)] animate-[modalEnter_0.2s_ease-out]">
-        <button 
+            <button 
               onClick={() => { setSelectedGP(null); setRoundScores(null); }}
               className="absolute top-0 right-0 p-6 z-50 text-slate-400 font-black text-xs uppercase tracking-wider transition-all cursor-pointer group select-none"
             >
@@ -207,8 +216,6 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ onNavigateToTeam }) =>
                 ✕ Fermer Window
               </div>
             </button>
-            
-
             <div className="border-b-2 border-slate-900 pb-5 mb-8 relative">
               <div className="absolute bottom-0 left-0 w-16 h-[2px] bg-red-600" />
               <span className="text-[10px] font-mono text-red-500 font-black uppercase tracking-widest bg-red-950/30 px-2 py-0.5 rounded border border-red-900/30">Official Results Overview</span>
@@ -216,11 +223,12 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ onNavigateToTeam }) =>
               {roundScores && (
                 <div className="mt-4 inline-flex items-center bg-red-600 text-white px-5 py-2 rounded-lg font-black italic tracking-tight shadow-lg shadow-red-950/50 transform -skew-x-6">
                   <span className="text-xs uppercase font-bold tracking-wider text-red-100 not-italic mr-2">Total Week-end : </span>
-                  <span className="text-xl font-mono">{roundScores.totalScore} PTS</span>
+                  <span className="text-xl font-mono">
+                    {Math.max(0, roundScores.driversDetails.reduce((sum, d) => sum + d.total, 0))} PTS
+                  </span>
                 </div>
               )}
             </div>
-
             {loadingModal ? (
               <div className="py-24 flex flex-col items-center">
                 <div className="w-10 h-10 border-4 border-red-600 border-t-transparent rounded-full animate-spin mb-3"></div>

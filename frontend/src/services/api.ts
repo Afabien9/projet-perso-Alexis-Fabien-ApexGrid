@@ -42,6 +42,7 @@ export const authService = {
 
   // --- GESTION DES ÉQUIPES PAR ROUND ---
   saveTeam: async (driverIds: string[], round: string) => {
+    // Envoie le tableau JavaScript brut qui va être correctement traduit en TEXT ARRAY (_text) par Express et pg
     const res = await fetch(`${API_URL}/save-team`, {
       method: "POST",
       headers: getAuthHeaders(),

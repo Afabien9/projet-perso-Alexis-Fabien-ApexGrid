@@ -1,33 +1,64 @@
+// backend/src/controllers/resultsController.ts
+
 import type { Request, Response } from "express";
 import * as ScoringEngine from "../services/ScoringEngine.js";
-import fs, { readFileSync } from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
 import type { RaceResult } from "../models/RaceResult.js";
 import { db } from "../config/ds.js";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+/**
+ * Fonction utilitaire interne pour charger l'élite et le fond de grille depuis la BDD
+ */
+async function getSeasonConfig(round: string): Promise<{ eliteIds: string[]; bottomTeamIds: string[] }> {
+  let eliteIds: string[] = [];
+  let bottomTeamIds: string[] = [];
 
-const DATA_DIR = path.resolve(__dirname, "../../data");
+  try {
+    const configResult = await db.query(
+      "SELECT key, value FROM public.season_config WHERE round = $1",
+      [round]
+    );
 
-const elitePath = path.join(DATA_DIR, "elite_ids.json");
-const eliteIds = JSON.parse(readFileSync(elitePath, "utf-8"));
+    configResult.rows.forEach((row) => {
+      if (row.key === "elite_ids") {
+        eliteIds = row.value;
+      } else if (row.key === "bottom_ids") {
+        bottomTeamIds = row.value;
+      }
+    });
+  } catch (dbError) {
+    console.error("❌ Erreur de lecture de la table season_config :", dbError);
+  }
 
-const bottomPath = path.join(DATA_DIR, "bottom_ids.json");
-const bottomTeamIds = JSON.parse(readFileSync(bottomPath, "utf-8"));
+  return { 
+    eliteIds: Array.isArray(eliteIds) ? eliteIds : [], 
+    bottomTeamIds: Array.isArray(bottomTeamIds) ? bottomTeamIds : [] 
+  };
+}
 
 /**
  * @route   GET /api/results/:Round
- * @desc    Récupère les résultats de course globaux d'un round (Grille complète des 22 pilotes)
+ * @desc    Récupère les résultats de course globaux d'un round (Grille complète des 22 pilotes depuis la BDD)
  */
 export const getResultsByRound = async (req: Request, res: Response) => {
   try {
-    const Round = req.params.Round || req.params.round;
-    const resultPath = path.join(DATA_DIR, "results", `round_${Round}.json`);
+    const Round = (req.params.Round || req.params.round || "") as string;
     
-    const rawData = readFileSync(resultPath, "utf-8");
-    const myData: RaceResult[] = JSON.parse(rawData);
+    if (!Round) {
+      return res.status(400).json({ message: "Le numéro du round est requis." });
+    }
+
+    const { eliteIds, bottomTeamIds } = await getSeasonConfig(Round);
+
+    const dbResults = await db.query(
+      "SELECT driver_id AS \"driverId\", constructor_id AS \"constructorId\", grid, position, status, is_points AS \"isPoints\" FROM public.race_results WHERE round = $1 ORDER BY position ASC",
+      [Round]
+    );
+
+    if (dbResults.rows.length === 0) {
+      return res.status(404).json({ message: "Les résultats de ce round ne sont pas encore disponibles." });
+    }
+
+    const myData: RaceResult[] = dbResults.rows;
 
     const allDriver = myData.map((drivers) => {
       const baseScore = ScoringEngine.calculateUserPoints(drivers, eliteIds);
@@ -41,22 +72,23 @@ export const getResultsByRound = async (req: Request, res: Response) => {
       };
     });
 
-    res.status(200).json(allDriver);
+    return res.status(200).json(allDriver);
   } catch (error) {
-    res.status(404).json({ message: "Résultats indisponibles pour ce round" });
+    console.error("Erreur getResultsByRound :", error);
+    return res.status(500).json({ message: "Erreur serveur lors de la récupération des résultats." });
   }
 };
 
 /**
  * @route   GET /api/results/user/selected-ranking
- * @desc    Calcule le classement général cumulé de la saison pour les pilotes de l'utilisateur
+ * @desc    Calcule le classement général cumulé de la saison pour les pilotes de l'utilisateur via la BDD
  */
 export const getSelectedRanking = async (req: any, res: any) => {
   try {
     const userId = req.user.id;
 
     const teamResult = await db.query(
-      "SELECT driver_ids FROM user_teams WHERE user_id = $1",
+      "SELECT driver_ids FROM public.user_teams WHERE user_id = $1 ORDER BY round DESC LIMIT 1",
       [userId]
     );
 
@@ -66,14 +98,34 @@ export const getSelectedRanking = async (req: any, res: any) => {
 
     const selectedDrivers: string[] = teamResult.rows[0].driver_ids;
 
-    const resultsDir = path.join(DATA_DIR, "results");
-    if (!fs.existsSync(resultsDir)) {
-      return res.status(404).json({ message: "Aucun historique de course local trouvé." });
+    const dbRaceRecords = await db.query(
+      "SELECT round, driver_id AS \"driverId\", constructor_id AS \"constructorId\", grid, position, status, is_points AS \"isPoints\" FROM public.race_results"
+    );
+
+    if (dbRaceRecords.rows.length === 0) {
+      return res.status(200).json([]);
     }
 
-    const files = fs.readdirSync(resultsDir).filter(
-      (file) => file.startsWith("round_") && file.endsWith(".json")
-    );
+    const allConfigs = await db.query("SELECT round, key, value FROM public.season_config");
+    const configMap: Record<string, { eliteIds: string[]; bottomTeamIds: string[] }> = {};
+    
+    allConfigs.rows.forEach(row => {
+      if (!configMap[row.round]) {
+        configMap[row.round] = { eliteIds: [], bottomTeamIds: [] };
+      }
+      
+      const currentConfig = configMap[row.round]!;
+      if (row.key === "elite_ids") currentConfig.eliteIds = row.value;
+      if (row.key === "bottom_ids") currentConfig.bottomTeamIds = row.value;
+    });
+
+    const raceResultsByRound: Record<string, RaceResult[]> = {};
+    dbRaceRecords.rows.forEach((row) => {
+      if (!raceResultsByRound[row.round]) {
+        raceResultsByRound[row.round] = [];
+      }
+      (raceResultsByRound[row.round] || []).push(row);
+    });
 
     const cumulativeRanking: Record<
       string,
@@ -81,7 +133,7 @@ export const getSelectedRanking = async (req: any, res: any) => {
     > = {};
 
     selectedDrivers.forEach((id) => {
-      cumulativeRanking[id] = {
+      cumulativeRanking[id.toLowerCase()] = {
         driverId: id,
         constructorId: "non-défini",
         totalPoints: 0,
@@ -89,15 +141,16 @@ export const getSelectedRanking = async (req: any, res: any) => {
       };
     });
 
-    files.forEach((file) => {
-      const filePath = path.join(resultsDir, file);
-      const rawData = fs.readFileSync(filePath, "utf-8");
-      const raceResults: RaceResult[] = JSON.parse(rawData);
+    Object.keys(raceResultsByRound).forEach((round) => {
+      const raceResults = raceResultsByRound[round] || [];
+      const eliteIds = configMap[round]?.eliteIds || [];
+      const bottomTeamIds = configMap[round]?.bottomTeamIds || [];
 
       selectedDrivers.forEach((driverId) => {
-        const driverData = raceResults.find((r) => r.driverId === driverId);
+        const driverKey = driverId.toLowerCase();
+        const driverData = raceResults.find((r) => r.driverId.toLowerCase() === driverKey);
         
-        if (driverData) {
+        if (driverData && cumulativeRanking[driverKey]) {
           const baseScore = ScoringEngine.calculateUserPoints(driverData, eliteIds);
           const bonusDepassement = ScoringEngine.calculateOvertakeBonus(driverData);
           const bonusEquipe = ScoringEngine.calculateTeamMateBonus(driverData, raceResults);
@@ -105,11 +158,9 @@ export const getSelectedRanking = async (req: any, res: any) => {
 
           const roundTotal = baseScore + bonusDepassement + bonusEquipe + malusScore;
 
-          if (cumulativeRanking[driverId]) {
-            cumulativeRanking[driverId].totalPoints += roundTotal;
-            cumulativeRanking[driverId].constructorId = driverData.constructorId;
-            cumulativeRanking[driverId].positionsHistory.push(Number(driverData.position));
-          }
+          cumulativeRanking[driverKey].totalPoints += roundTotal;
+          cumulativeRanking[driverKey].constructorId = driverData.constructorId;
+          cumulativeRanking[driverKey].positionsHistory.push(Number(driverData.position));
         }
       });
     });
@@ -118,38 +169,28 @@ export const getSelectedRanking = async (req: any, res: any) => {
       (a, b) => b.totalPoints - a.totalPoints
     );
 
-    res.status(200).json(sortedRanking);
+    return res.status(200).json(sortedRanking);
   } catch (error) {
-    console.error("Erreur serveur lors du calcul du classement sélectionné :", error);
-    res.status(500).json({ message: "Erreur lors du calcul du classement personnalisé." });
+    console.error("Erreur classement sélectionné :", error);
+    return res.status(500).json({ message: "Erreur lors du calcul du classement personnalisé." });
   }
 };
 
 /**
  * @route   GET /api/results/user/round-details/:Round
- * @desc    Récupère la fiche de score détaillée course par course en s'alignant sur la BDD
+ * @desc    Récupère la fiche de score détaillée course par course
  */
 export const getUserRoundDetails = async (req: any, res: Response) => {
   try {
-    const Round = req.params.Round || req.params.round;
+    const Round = (req.params.Round || req.params.round || "") as string;
     const userId = req.user?.id;
 
     if (!Round) {
       return res.status(400).json({ message: "Le numéro du round est requis." });
     }
 
-    // 1. ANCRAGE DE VÉRITÉ : On va chercher le score officiel calculé et stocké en BDD
-    const scoreResult = await db.query(
-      "SELECT points FROM public.user_scores WHERE user_id = $1 AND round = $2",
-      [userId, Round]
-    );
-
-    // Si la ligne de score existe en BDD, on prend cette valeur, sinon 0 par défaut
-    const officialTotalScore = scoreResult.rows[0] ? Number(scoreResult.rows[0].points) : 0;
-
-    // 2. Récupération de l'alignement de l'utilisateur pour ce round
     const teamResult = await db.query(
-      "SELECT driver_ids FROM user_teams WHERE user_id = $1 AND round = $2",
+      "SELECT driver_ids FROM public.user_teams WHERE user_id = $1 AND round = $2",
       [userId, Round]
     );
 
@@ -157,32 +198,26 @@ export const getUserRoundDetails = async (req: any, res: Response) => {
     if (teamResult.rows[0] && teamResult.rows[0].driver_ids && teamResult.rows[0].driver_ids.length > 0) {
       selectedDrivers = teamResult.rows[0].driver_ids;
     } else {
-      // Repli d'affichage pour les tests si aucune composition d'équipe n'a été saisie en BDD
       selectedDrivers = ["leclerc", "hamilton", "albon", "bearman", "antonelli"];
     }
 
-    // 3. Récupération des données locales pour fabriquer le détail des cartes pilotes
-    const resultPath = path.join(DATA_DIR, "results", `round_${Round}.json`);
-    if (!fs.existsSync(resultPath)) {
+    const dbResults = await db.query(
+      "SELECT driver_id AS \"driverId\", constructor_id AS \"constructorId\", grid, position, status, is_points AS \"isPoints\" FROM public.race_results WHERE round = $1",
+      [Round]
+    );
+
+    if (dbResults.rows.length === 0) {
       return res.status(404).json({ message: "Données indisponibles pour ce Grand Prix." });
     }
 
-    const rawData = readFileSync(resultPath, "utf-8");
-    const raceResults: RaceResult[] = JSON.parse(rawData);
+    const raceResults: RaceResult[] = dbResults.rows;
+    const { eliteIds, bottomTeamIds } = await getSeasonConfig(Round);
 
-    // 4. Calcul unitaire indicatif des cartes pilotes pour l'affichage de la modal
     const driversDetails = selectedDrivers.map((driverId) => {
       const driverData = raceResults.find((r) => r.driverId.toLowerCase() === driverId.toLowerCase());
       if (!driverData) {
         return {
-          nom: driverId,
-          position: 0,
-          depart: 0,
-          points_base: 0,
-          bonus_duel: 0,
-          bonus_depassement: 0,
-          bonus_exploit: 0,
-          total: 0
+          nom: driverId, position: 0, depart: 0, points_base: 0, bonus_duel: 0, bonus_depassement: 0, bonus_exploit: 0, total: 0
         };
       }
 
@@ -203,23 +238,16 @@ export const getUserRoundDetails = async (req: any, res: Response) => {
           total: (basePoints + bonusDuel + bonusOvertake + bonusUnderdog)
         };
       } catch (scoringError) {
-        console.error(`❌ Échec du calcul indicatif pour le pilote ${driverId} :`, scoringError);
         return {
-          nom: driverId,
-          position: Number(driverData.position || 0),
-          depart: Number(driverData.grid || 0),
-          points_base: 0,
-          bonus_duel: 0,
-          bonus_depassement: 0,
-          bonus_exploit: 0,
-          total: 0
+          nom: driverId, position: Number(driverData.position || 0), depart: Number(driverData.grid || 0), points_base: 0, bonus_duel: 0, bonus_depassement: 0, bonus_exploit: 0, total: 0
         };
       }
     }).filter(Boolean);
 
-    // ⚠️ CRUCIAL : On renvoie officialTotalScore (la BDD). Plus aucun décalage possible avec le leaderboard général !
+    const computedTotal = Math.max(0, driversDetails.reduce((sum, d) => sum + d.total, 0));
+
     return res.status(200).json({ 
-      totalScore: officialTotalScore, 
+      totalScore: computedTotal, 
       driversDetails 
     });
 
@@ -230,70 +258,132 @@ export const getUserRoundDetails = async (req: any, res: Response) => {
 };
 
 /**
- * @route   GET /api/results/leaderboard/season
- * @desc    Récupère le classement général cumulé (Saison) de tous les UTILISATEURS depuis la BDD
+ * @route   GET /api/results/leaderboard/round/:Round
+ * @desc    Calcule le classement AUTOMATIQUE et en temps réel de tous les UTILISATEURS pour un round spécifique
  */
-export const getSeasonLeaderboard = async (req: Request, res: Response) => {
+export const getRoundLeaderboard = async (req: Request, res: Response) => {
   try {
-    const queryText = `
-      SELECT 
-        u.username,
-        COALESCE(SUM(s.points), 0) as "totalPoints"
-      FROM public.users u
-      LEFT JOIN public.user_scores s ON u.id = s.user_id
-      GROUP BY u.id, u.username
-      ORDER BY "totalPoints" DESC
-    `;
-    const result = await db.query(queryText);
+    const Round = (req.params.Round || req.params.round || "") as string;
+    if (!Round) return res.status(400).json({ message: "Le numéro du round est requis." });
 
-    const leaderboard = result.rows.map((row, index) => ({
-      rank: index + 1,
-      username: row.username,
-      points: Number(row.totalPoints),
-      driversLineUp: []
-    }));
+    const raceResultsQuery = await db.query(
+      "SELECT driver_id AS \"driverId\", constructor_id AS \"constructorId\", grid, position, status, is_points AS \"isPoints\" FROM public.race_results WHERE round = $1",
+      [Round]
+    );
 
-    return res.status(200).json(leaderboard);
+    if (raceResultsQuery.rows.length === 0) return res.status(200).json([]);
+
+    const raceResults: RaceResult[] = raceResultsQuery.rows;
+    const { eliteIds, bottomTeamIds } = await getSeasonConfig(Round);
+
+    const userTeamsQuery = await db.query(
+      "SELECT u.username, t.driver_ids AS \"driverIds\" FROM public.users u INNER JOIN public.user_teams t ON u.id = t.user_id WHERE t.round = $1",
+      [Round]
+    );
+
+    const leaderboard = userTeamsQuery.rows.map((row) => {
+      const drivers: string[] = row.driverIds || [];
+      let totalPoints = 0;
+
+      drivers.forEach((driverId) => {
+        const driverData = raceResults.find((r) => r.driverId.toLowerCase() === driverId.toLowerCase());
+        if (driverData) {
+          totalPoints += ScoringEngine.calculateUserPoints(driverData, eliteIds) +
+                         ScoringEngine.calculateOvertakeBonus(driverData) +
+                         ScoringEngine.calculateTeamMateBonus(driverData, raceResults) +
+                         ScoringEngine.calculateUnderdogBonus(driverData, bottomTeamIds);
+        }
+      });
+
+      return {
+        username: row.username,
+        points: Math.max(0, totalPoints),
+        driversLineUp: drivers
+      };
+    });
+
+    const sortedLeaderboard = leaderboard
+      .sort((a, b) => b.points - a.points)
+      .map((user, index) => ({ rank: index + 1, ...user }));
+
+    return res.status(200).json(sortedLeaderboard);
   } catch (error) {
-    console.error("Erreur SQL getSeasonLeaderboard :", error);
-    return res.status(500).json({ message: "Erreur lors du calcul du classement général." });
+    console.error("Erreur getRoundLeaderboard automatique :", error);
+    return res.status(500).json({ message: "Erreur lors du calcul automatique du classement." });
   }
 };
 
 /**
- * @route   GET /api/results/leaderboard/round/:Round
- * @desc    Récupère le classement de tous les UTILISATEURS avec leurs résultats pour un round spécifique
+ * @route   GET /api/results/leaderboard/season
+ * @desc    Calcule automatiquement le classement général cumulé de la saison de tous les utilisateurs
  */
-export const getRoundLeaderboard = async (req: Request, res: Response) => {
+export const getSeasonLeaderboard = async (req: Request, res: Response) => {
   try {
-    const Round = req.params.Round || req.params.round;
+    const allRaceRecords = await db.query(
+      "SELECT round, driver_id AS \"driverId\", constructor_id AS \"constructorId\", grid, position, status, is_points AS \"isPoints\" FROM public.race_results"
+    );
 
-    if (!Round) {
-      return res.status(400).json({ message: "Le numéro du round est requis." });
-    }
+    if (allRaceRecords.rows.length === 0) return res.status(200).json([]);
 
-    const queryText = `
-      SELECT 
-        u.username,
-        COALESCE(s.points, 0) as "roundPoints",
-        t.driver_ids as "driverIds"
-      FROM public.users u
-      INNER JOIN public.user_scores s ON u.id = s.user_id AND s.round = $1
-      LEFT JOIN public.user_teams t ON u.id = t.user_id AND t.round = $1
-      ORDER BY "roundPoints" DESC
-    `;
-    const result = await db.query(queryText, [Round]);
+    const raceResultsByRound: Record<string, RaceResult[]> = {};
+    allRaceRecords.rows.forEach((row) => {
+      if (!raceResultsByRound[row.round]) {
+        raceResultsByRound[row.round] = [];
+      }
+      (raceResultsByRound[row.round] || []).push(row);
+    });
 
-    const leaderboard = result.rows.map((row, index) => ({
-      rank: index + 1,
-      username: row.username,
-      points: Number(row.roundPoints),
-      driversLineUp: row.driverIds || []
+    const allConfigs = await db.query("SELECT round, key, value FROM public.season_config");
+    const configMap: Record<string, { eliteIds: string[]; bottomTeamIds: string[] }> = {};
+    
+    allConfigs.rows.forEach(row => {
+      if (!configMap[row.round]) configMap[row.round] = { eliteIds: [], bottomTeamIds: [] };
+      const currentConfig = configMap[row.round]!;
+      if (row.key === "elite_ids") currentConfig.eliteIds = row.value;
+      if (row.key === "bottom_ids") currentConfig.bottomTeamIds = row.value;
+    });
+
+    const userTeamsQuery = await db.query(
+      "SELECT u.username, t.round, t.driver_ids AS \"driverIds\" FROM public.users u INNER JOIN public.user_teams t ON u.id = t.user_id"
+    );
+
+    const userScoresMap: Record<string, number> = {};
+
+    userTeamsQuery.rows.forEach((row) => {
+      const round = row.round;
+      const drivers: string[] = row.driverIds || [];
+      const raceResults = raceResultsByRound[round] || [];
+      const currentConfig = configMap[round] || { eliteIds: [], bottomTeamIds: [] };
+      const eliteIds = currentConfig.eliteIds;
+      const bottomTeamIds = currentConfig.bottomTeamIds;
+
+      let roundPoints = 0;
+      drivers.forEach((driverId) => {
+        const driverData = raceResults.find((r) => r.driverId.toLowerCase() === driverId.toLowerCase());
+        if (driverData) {
+          roundPoints += ScoringEngine.calculateUserPoints(driverData, eliteIds) +
+                         ScoringEngine.calculateOvertakeBonus(driverData) +
+                         ScoringEngine.calculateTeamMateBonus(driverData, raceResults) +
+                         ScoringEngine.calculateUnderdogBonus(driverData, bottomTeamIds);
+        }
+      });
+
+      userScoresMap[row.username] = (userScoresMap[row.username] || 0) + Math.max(0, roundPoints);
+    });
+
+    const leaderboard = Object.keys(userScoresMap).map((username) => ({
+      username,
+      points: userScoresMap[username] || 0, // Sécurité anti-undefined pour le typage strict
+      driversLineUp: []
     }));
 
-    return res.status(200).json(leaderboard);
+    const sortedLeaderboard = leaderboard
+      .sort((a, b) => (b.points || 0) - (a.points || 0)) // Initialisation par défaut pour le tri strict
+      .map((user, index) => ({ rank: index + 1, ...user }));
+
+    return res.status(200).json(sortedLeaderboard);
   } catch (error) {
-    console.error("Erreur SQL getRoundLeaderboard :", error);
-    return res.status(500).json({ message: "Erreur lors du calcul du classement du round." });
+    console.error("Erreur getSeasonLeaderboard automatique :", error);
+    return res.status(500).json({ message: "Erreur lors du calcul du classement général." });
   }
 };

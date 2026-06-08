@@ -1,20 +1,9 @@
-// backend/scripts/SyncManager.ts (ou le chemin actuel de ton script de synchro)
+// backend/scripts/SyncManager.ts
 
-import fs from 'fs';
-import path from 'path';
-// Importation des services de récupération de données
 import { bigFive, getBottomTeams, getRaceResult } from '../src/services/ApiService.js';
 import * as ScoringEngine from '../src/services/ScoringEngine.js';
 import type { RaceResult } from '../src/models/RaceResult.js';
 import { db } from '../src/config/ds.js';
-
-const DATA_DIR = path.join(process.cwd(), 'data');
-const RESULTS_DIR = path.join(DATA_DIR, 'results');
-const LOG_FILE = path.join(DATA_DIR, 'sync_log.json');
-
-if (!fs.existsSync(RESULTS_DIR)) {
-  fs.mkdirSync(RESULTS_DIR, { recursive: true });
-}
 
 async function runSync() {
   // Extraction du paramètre --round passé en commande npm
@@ -26,29 +15,82 @@ async function runSync() {
     process.exit(1);
   }
 
-  console.log(`--- 🏁 DÉBUT SYNCHRONISATION APEXGRID (Round ${roundArg}) ---`);
+  console.log(`--- 🏁 DÉBUT SYNCHRONISATION APEXGRID SUR BDD (Round ${roundArg}) ---`);
 
   try {
-    // 1. MISE À ZONE DE L'ÉLITE (Top 5 mondial)
+    // 1. MISE À JOUR DE L'ÉLITE (Top 5 mondial) DANS LE CONFIG DE SAISON
     console.log("🔍 Identification de l'élite actuelle...");
     const eliteIds: string[] = await bigFive();
-    fs.writeFileSync(path.join(DATA_DIR, 'elite_ids.json'), JSON.stringify(eliteIds, null, 2));
-    console.log(`✅ Élite mise à jour : ${eliteIds.join(', ')}`);
+    
+    // Normalisation en minuscules pour éviter les pièges de casse
+    const normalizedElite = eliteIds.map(id => id.toLowerCase());
 
-    // 2. MISE À JOUR DU FOND DE GRILLE (3 dernières écuries)
+    // Le driver pg convertit un Array JS directement au format TEXT ARRAY (_text) de Postgres
+    await db.query(`
+      INSERT INTO public.season_config (round, key, value, updated_at)
+      VALUES ($1, 'elite_ids', $2, NOW())
+      ON CONFLICT (round, key) 
+      DO UPDATE SET value = EXCLUDED.value, updated_at = NOW();
+    `, [roundArg, normalizedElite]);
+    console.log(`✅ Élite synchronisée en BDD : ${normalizedElite.join(', ')}`);
+
+    // 2. MISE À JOUR DU FOND DE GRILLE (3 dernières écuries) DANS LE CONFIG DE SAISON
     console.log("🔍 Identification du fond de grille actuel...");
     const bottomIds: string[] = await getBottomTeams();
-    fs.writeFileSync(path.join(DATA_DIR, 'bottom_ids.json'), JSON.stringify(bottomIds, null, 2));
-    console.log(`✅ Fond de grille mis à jour : ${bottomIds.join(', ')}`);
+    
+    // Normalisation en minuscules également
+    const normalizedBottom = bottomIds.map(id => id.toLowerCase());
 
-    // 3. RÉCUPÉRATION DES RÉSULTATS DE COURSE
+    await db.query(`
+      INSERT INTO public.season_config (round, key, value, updated_at)
+      VALUES ($1, 'bottom_ids', $2, NOW())
+      ON CONFLICT (round, key) 
+      DO UPDATE SET value = EXCLUDED.value, updated_at = NOW();
+    `, [roundArg, normalizedBottom]);
+    console.log(`✅ Fond de grille synchronisé en BDD : ${normalizedBottom.join(', ')}`);
+
+    // 3. RÉCUPÉRATION ET SAUVEGARDE DES RÉSULTATS DE COURSE
     console.log(`📥 Téléchargement des résultats du Round ${roundArg}...`);
     const raceResults: RaceResult[] = await getRaceResult("2026", roundArg);
     
-    // Vérification sommaire de la donnée reçue avant écriture
     if (raceResults && raceResults.length > 0) {
-      fs.writeFileSync(path.join(RESULTS_DIR, `round_${roundArg}.json`), JSON.stringify(raceResults, null, 2));
-      console.log(`✅ Résultats du Round ${roundArg} enregistrés.`);
+      console.log(`📥 Sauvegarde de sécurité des ${raceResults.length} résultats de pilotes dans la table public.race_results...`);
+      
+      for (const driverResult of raceResults) {
+        // Sécurité cruciale anti-NaN pour les abandons (ex: position "R" ou "D")
+        const positionVal = isNaN(Number(driverResult.position)) ? 20 : Number(driverResult.position);
+        const gridVal = isNaN(Number(driverResult.grid)) ? 20 : Number(driverResult.grid);
+        
+        // Validation stricte de l'entrée dans les points (Top 10)
+        const isPointsVal = positionVal <= 10;
+
+        try {
+          await db.query(`
+            INSERT INTO public.race_results (round, driver_id, constructor_id, grid, position, status, is_points, created_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+            ON CONFLICT (round, driver_id) 
+            DO UPDATE SET 
+              constructor_id = EXCLUDED.constructor_id, 
+              grid = EXCLUDED.grid, 
+              position = EXCLUDED.position, 
+              status = EXCLUDED.status, 
+              is_points = EXCLUDED.is_points;
+          `, [
+            roundArg,
+            driverResult.driverId.toLowerCase(),
+            driverResult.constructorId.toLowerCase(),
+            gridVal,
+            positionVal,
+            driverResult.status || "Finished",
+            isPointsVal
+          ]);
+          
+          console.log(`   ↳ 🏎️ Pilote [${driverResult.driverId}] synchronisé en position P${positionVal}`);
+        } catch (sqlError) {
+          console.error(`❌ Échec de la requête SQL d'insertion pour le pilote ${driverResult.driverId} :`, sqlError);
+        }
+      }
+      console.log(`✅ Table race_results mise à jour avec succès.`);
     } else {
       throw new Error(`Aucun résultat trouvé pour le round ${roundArg}`);
     }
@@ -70,24 +112,27 @@ async function runSync() {
       for (const team of teamsResult.rows) {
         const { user_id, driver_ids } = team;
 
-        if (!driver_ids || !Array.isArray(driver_ids) || driver_ids.length === 0) {
+        // La colonne driver_ids étant de type _text, elle arrive nativement en Array JS
+        const parsedDriverIds: string[] = driver_ids;
+
+        if (!parsedDriverIds || !Array.isArray(parsedDriverIds) || parsedDriverIds.length === 0) {
           continue;
         }
 
         let userRoundTotal = 0;
 
         // Évaluation de chaque pilote sélectionné par le manager
-        driver_ids.forEach((driverId: string) => {
+        parsedDriverIds.forEach((driverId: string) => {
           const driverData = raceResults.find(
             (r) => r.driverId.toLowerCase() === driverId.toLowerCase()
           );
 
           if (driverData) {
             // Utilisation stricte de tes fonctions de calcul TypeScript
-            const base = ScoringEngine.calculateUserPoints(driverData, eliteIds);
+            const base = ScoringEngine.calculateUserPoints(driverData, normalizedElite);
             const overtake = ScoringEngine.calculateOvertakeBonus(driverData);
             const teamMate = ScoringEngine.calculateTeamMateBonus(driverData, raceResults);
-            const underdog = ScoringEngine.calculateUnderdogBonus(driverData, bottomIds);
+            const underdog = ScoringEngine.calculateUnderdogBonus(driverData, normalizedBottom);
 
             userRoundTotal += (base + overtake + teamMate + underdog);
           }
@@ -96,7 +141,7 @@ async function runSync() {
         // Protection anti-négatif globale
         userRoundTotal = Math.max(0, userRoundTotal);
 
-        // Insertion ou mise à jour (Upsert) pour écraser les anciennes valeurs erronées
+        // Insertion ou mise à jour (Upsert) pour écraser les anciennes valeurs
         await db.query(`
           INSERT INTO public.user_scores (user_id, round, points, updated_at)
           VALUES ($1, $2, $3, NOW())
@@ -108,34 +153,20 @@ async function runSync() {
       }
     }
 
-    // 5. GÉNÉRATION DU LOG DE SUIVI
+    // 5. AFFICHAGE DU LOG DE SUIVI DANS LA CONSOLE
     const syncLog = {
       last_sync: new Date().toISOString(),
       round_synchronized: roundArg,
       status: "SUCCESS",
-      files_updated: [
-        "elite_ids.json",
-        "bottom_ids.json",
-        `results/round_${roundArg}.json`
-      ],
-      database_sync: "SUCCESS"
+      database_sync: "ALL_TABLES_COMPLETED"
     };
-    fs.writeFileSync(LOG_FILE, JSON.stringify(syncLog, null, 2));
     
-    console.log("--- ✨ TOUTES LES DONNÉES SONT À JOUR EN LOCAL ET EN BDD ---");
+    console.log("--- ✨ TOUTES LES DONNÉES SONT À JOUR DIRECTEMENT EN BDD ---");
+    console.table(syncLog);
     process.exit(0);
 
   } catch (error) {
-    // Log d'échec en cas de problème API ou système
-    const errorLog = {
-      last_attempt: new Date().toISOString(),
-      round_attempted: roundArg,
-      status: "FAILED",
-      error_message: error instanceof Error ? error.message : "Erreur inconnue"
-    };
-    fs.writeFileSync(LOG_FILE, JSON.stringify(errorLog, null, 2));
-    
-    console.error("❌ ERREUR CRITIQUE DURANT LA SYNCHRO :", error);
+    console.error("❌ ERREUR CRITIQUE DURANT LA SYNCHRO EN BDD :", error);
     process.exit(1);
   }
 }

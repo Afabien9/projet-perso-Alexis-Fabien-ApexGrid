@@ -1,3 +1,5 @@
+// frontend/src/main.tsx
+
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom/client';
 import AuthPage from './pages/AuthPage.js';
@@ -6,7 +8,7 @@ import { GrandPrixSelector } from './pages/GrandPrixSelector';
 import { HistoryPage } from './pages/HistoryPage';
 import { Dashboard } from './pages/Dashboard'; 
 import { MyTeamPage } from './pages/MyTeamPage';
-import { LeaderboardPage } from './pages/LeaderboardPage'; // Ajout de l'import
+import { LeaderboardPage } from './pages/LeaderboardPage';
 import { authService } from './services/api';
 import './index.css';
 
@@ -18,7 +20,7 @@ const MainLayout = () => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [selectedRound, setSelectedRound] = useState<string>('1');
   const [activeTargetRound, setActiveTargetRound] = useState<string | undefined>(undefined);
-  const [returnToView, setReturnToView] = useState<'calendar' | 'history' | 'dashboard' | 'leaderboard'>('dashboard');
+  const [returnToView, setReturnToView] = useState<ActiveView>('dashboard');
 
   const handleSelectRoundFromCalendar = (roundNumber: string) => {
     setSelectedRound(roundNumber);
@@ -48,7 +50,7 @@ const MainLayout = () => {
       {/* BOUTON BURGER */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed top-5 left-5 z-50 p-3 bg-slate-900 border border-slate-800 rounded-lg hover:border-red-600 transition-all focus:outline-none shadow-lg shadow-black/50"
+        className="fixed top-5 left-5 z-50 p-3 bg-slate-900 border border-slate-800 rounded-lg hover:border-red-600 transition-all focus:outline-none shadow-lg shadow-black/50 cursor-pointer"
         aria-label="Menu de navigation"
       >
         <div className="w-6 h-5 flex flex-col justify-between items-center relative">
@@ -77,7 +79,7 @@ const MainLayout = () => {
                 setActiveTargetRound(undefined);
                 setIsOpen(false);
               }}
-              className={`w-full text-left font-bold uppercase tracking-wider text-xs px-4 py-3 rounded-lg border transition-all ${
+              className={`w-full text-left font-bold uppercase tracking-wider text-xs px-4 py-3 rounded-lg border transition-all cursor-pointer ${
                 currentView === 'dashboard'
                   ? 'bg-red-600/10 border-red-600 text-red-500 shadow-[0_0_15px_rgba(220,38,38,0.1)]'
                   : 'bg-slate-950/40 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-white'
@@ -88,26 +90,11 @@ const MainLayout = () => {
 
             <button
               onClick={() => {
-                setCurrentView('team');
-                setActiveTargetRound(undefined);
-                setIsOpen(false);
-              }}
-              className={`w-full text-left font-bold uppercase tracking-wider text-xs px-4 py-3 rounded-lg border transition-all ${
-                currentView === 'team'
-                  ? 'bg-red-600/10 border-red-600 text-red-500 shadow-[0_0_15px_rgba(220,38,38,0.1)]'
-                  : 'bg-slate-950/40 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-white'
-              }`}
-            >
-              🏁 Mon Écurie
-            </button>
-
-            <button
-              onClick={() => {
                 setCurrentView('calendar');
                 setActiveTargetRound(undefined);
                 setIsOpen(false);
               }}
-              className={`w-full text-left font-bold uppercase tracking-wider text-xs px-4 py-3 rounded-lg border transition-all ${
+              className={`w-full text-left font-bold uppercase tracking-wider text-xs px-4 py-3 rounded-lg border transition-all cursor-pointer ${
                 currentView === 'calendar'
                   ? 'bg-red-600/10 border-red-600 text-red-500 shadow-[0_0_15px_rgba(220,38,38,0.1)]'
                   : 'bg-slate-950/40 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-white'
@@ -121,7 +108,7 @@ const MainLayout = () => {
                 setCurrentView('history');
                 setIsOpen(false);
               }}
-              className={`w-full text-left font-bold uppercase tracking-wider text-xs px-4 py-3 rounded-lg border transition-all ${
+              className={`w-full text-left font-bold uppercase tracking-wider text-xs px-4 py-3 rounded-lg border transition-all cursor-pointer ${
                 currentView === 'history'
                   ? 'bg-red-600/10 border-red-600 text-red-500 shadow-[0_0_15px_rgba(220,38,38,0.1)]'
                   : 'bg-slate-950/40 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-white'
@@ -130,13 +117,12 @@ const MainLayout = () => {
               📜 Mon Historique
             </button>
 
-            {/* AJOUT DE L'ONGLET CLASSEMENT GÉNÉRAL */}
             <button
               onClick={() => {
                 setCurrentView('leaderboard');
                 setIsOpen(false);
               }}
-              className={`w-full text-left font-bold uppercase tracking-wider text-xs px-4 py-3 rounded-lg border transition-all ${
+              className={`w-full text-left font-bold uppercase tracking-wider text-xs px-4 py-3 rounded-lg border transition-all cursor-pointer ${
                 currentView === 'leaderboard'
                   ? 'bg-red-600/10 border-red-600 text-red-500 shadow-[0_0_15px_rgba(220,38,38,0.1)]'
                   : 'bg-slate-950/40 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-white'
@@ -147,16 +133,15 @@ const MainLayout = () => {
           </nav>
         </div>
 
-        {/* SECTION FOOTER DU MENU AVEC BOUTON DÉCONNEXION */}
         <div className="mb-6 border-t border-slate-800 pt-4 space-y-4">
           <button
             onClick={handleLogout}
-            className="w-full text-center font-bold uppercase tracking-wider text-xs px-4 py-3 bg-red-950/20 hover:bg-red-600 border border-red-900/40 hover:border-red-600 text-red-400 hover:text-white rounded-lg transition-all shadow-lg shadow-black/30"
+            className="w-full text-center font-bold uppercase tracking-wider text-xs px-4 py-3 bg-red-950/20 hover:bg-red-600 border border-red-900/40 hover:border-red-600 text-red-400 hover:text-white rounded-lg transition-all shadow-lg shadow-black/30 cursor-pointer"
           >
             🚪 Déconnexion
           </button>
           <div className="opacity-20 text-center">
-            <p className="text-[8px] uppercase font-bold tracking-widest text-slate-400">Engine v3.0 // 2026</p>
+            <p className="text-[8px] uppercase font-bold tracking-widest text-slate-400">Final Project Alexis FABIEN</p>
           </div>
         </div>
       </div>
@@ -180,7 +165,10 @@ const MainLayout = () => {
           />
         )}
         {currentView === 'calendar' && (
-          <GrandPrixSelector onSelectRound={handleSelectRoundFromCalendar} />
+          <GrandPrixSelector 
+            onSelectRound={handleSelectRoundFromCalendar} 
+            onBack={() => setCurrentView('dashboard')} 
+          />
         )}
         {currentView === 'results' && (
           <RaceResults 
@@ -189,11 +177,15 @@ const MainLayout = () => {
           />
         )}
         {currentView === 'history' && (
-          <HistoryPage onNavigateToTeam={handleNavigateToTeamWithContext} />
+          <HistoryPage 
+            onNavigateToTeam={handleNavigateToTeamWithContext} 
+            onBack={() => setCurrentView('dashboard')} 
+          />
         )}
-        {/* INTERPOLATION DE LA VUE LEADERBOARD */}
         {currentView === 'leaderboard' && (
-          <LeaderboardPage />
+          <LeaderboardPage 
+            onBack={() => setCurrentView('dashboard')} 
+          />
         )}
       </div>
     </div>

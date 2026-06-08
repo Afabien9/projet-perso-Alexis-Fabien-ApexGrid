@@ -1,5 +1,3 @@
-// frontend/src/pages/MyTeamPage.tsx
-import calendar from "../../../backend/data/calendar.json";
 import { useEffect, useState } from "react";
 import { DRIVERS_CONFIG } from "../constants/drivers.js";
 import { authService } from "../services/api.js";
@@ -9,21 +7,23 @@ interface MyTeamPageProps {
   onBack: () => void;
 }
 
+interface GrandPrixInfo {
+  round: string;
+  name: string;
+}
+
 export function MyTeamPage({ targetRound, onBack }: MyTeamPageProps) {
   const currentRound = targetRound || "6";
 
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [raceName, setRaceName] = useState<string>(`GRAND PRIX ${currentRound}`);
 
   const BUDGET_MAX = 100;
   const PILOTES_MAX = 5;
 
   const [myTeam, setMyTeam] = useState<string[]>([]);
-  const currentRace = calendar.find((gp) => gp.round === currentRound);
-  const raceName = currentRace
-    ? currentRace.name
-    : `GRAND PRIX ${currentRound}`;
 
   const budgetConsomme = myTeam.reduce((total, id) => {
     const driver = DRIVERS_CONFIG.find((d) => d.id === id);
@@ -34,17 +34,27 @@ export function MyTeamPage({ targetRound, onBack }: MyTeamPageProps) {
     setLoading(true);
     setSaveSuccess(false);
 
-    authService
-      .getMyTeam(currentRound)
-      .then((data) => {
-        if (data && data.driver_ids) {
-          setMyTeam(data.driver_ids);
+    // 1. Chargement conjoint du Line-up utilisateur et du calendrier depuis l'API
+    Promise.all([
+      authService.getMyTeam(currentRound),
+      fetch("http://localhost:3000/api/calendar").then((res) => res.json())
+    ])
+      .then(([teamData, calendarData]: [any, GrandPrixInfo[]]) => {
+        // Hydratation de l'équipe depuis le tableau natif _text
+        if (teamData && teamData.driver_ids) {
+          setMyTeam(teamData.driver_ids);
         } else {
           setMyTeam([]);
         }
+
+        // Recherche dynamique du nom du Grand Prix dans le calendrier de la BDD
+        const currentRace = calendarData.find((gp) => gp.round === currentRound);
+        if (currentRace) {
+          setRaceName(currentRace.name);
+        }
       })
       .catch((err) => {
-        console.error("Erreur lors du chargement de l'équipe :", err);
+        console.error("Erreur lors de la synchronisation des données d'ingénierie :", err);
       })
       .finally(() => {
         setLoading(false);
@@ -86,7 +96,12 @@ export function MyTeamPage({ targetRound, onBack }: MyTeamPageProps) {
     setSaveSuccess(false);
 
     try {
-      await authService.saveTeam(myTeam, currentRound);
+      // Normalisation de sécurité de la casse de chaque identifiant pilote (minuscules)
+      // pour garantir l'équivalence parfaite avec les contraintes textuelles SQL
+      const normalizedLineUp = myTeam.map(id => id.toLowerCase());
+
+      // Transmission directe du tableau brut [] à ton service authService.saveTeam()
+      await authService.saveTeam(normalizedLineUp, currentRound);
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err) {
