@@ -24,63 +24,58 @@ interface HistoryPageProps {
   onBack: () => void;
 }
 
-export const HistoryPage: React.FC<HistoryPageProps> = ({ onNavigateToTeam, onBack }) => {
+export const HistoryPage: React.FC<HistoryPageProps> = ({
+  onNavigateToTeam,
+  onBack,
+}) => {
   const [calendar, setCalendar] = useState<GrandPrixCalendar[]>([]);
   const [configuredRounds, setConfiguredRounds] = useState<number[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   const [selectedGP, setSelectedGP] = useState<GrandPrixCalendar | null>(null);
-  const [roundScores, setRoundScores] = useState<RoundScoreResponse | null>(null);
+  const [roundScores, setRoundScores] = useState<RoundScoreResponse | null>(
+    null,
+  );
   const [loadingModal, setLoadingModal] = useState<boolean>(false);
 
-  const [lastSyncedRound, setLastSyncedRound] = useState<number>(6); 
+  // Valeur dynamique récupérée depuis le backend
+  const [lastSyncedRound, setLastSyncedRound] = useState<number>(0);
 
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
       setError(null);
 
-      const token = localStorage.getItem("apex_token");
-
       try {
+        // 1. Récupération du calendrier
         const resCalendar = await fetch("http://localhost:3000/api/calendar");
-        if (resCalendar.ok) {
-          const calendarData = await resCalendar.json();
-          setCalendar(calendarData);
-        } else {
-          throw new Error("Erreur calendrier");
+        if (!resCalendar.ok) throw new Error("Erreur calendrier");
+        const calendarData = await resCalendar.json();
+        setCalendar(calendarData);
+
+        // 2. Récupération dynamique du dernier round synchronisé
+        const resSync = await fetch(
+          "http://localhost:3000/api/last-synced-round",
+        );
+        if (resSync.ok) {
+          const syncData = await resSync.json();
+          setLastSyncedRound(syncData.lastSyncedRound);
+        }
+
+        // 3. Récupération des rounds configurés
+        const roundsData = await authService.getMyTeamsRounds();
+        if (Array.isArray(roundsData)) {
+          setConfiguredRounds(
+            roundsData.map((r) => parseInt(r, 10)).filter((num) => !isNaN(num)),
+          );
         }
       } catch (err) {
-        console.error("Erreur récupération calendrier:", err);
-        setError("Impossible de charger le calendrier des circuits.");
+        console.error("Erreur chargement:", err);
+        setError("Impossible de charger les données de saison.");
+      } finally {
         setLoading(false);
-        return;
       }
-
-      if (token) {
-        try {
-          const resRounds = await fetch("http://localhost:3000/my-teams-rounds", {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${token}`
-            }
-          });
-
-          if (resRounds.ok) {
-            const roundsData = await resRounds.json();
-            if (Array.isArray(roundsData)) {
-              const parsedRounds = roundsData.map(r => parseInt(r, 10)).filter(num => !isNaN(num));
-              setConfiguredRounds(parsedRounds);
-            }
-          }
-        } catch (err) {
-          console.error("Erreur lors de la lecture des rounds configurés:", err);
-        }
-      }
-
-      setLoading(false);
     };
 
     loadData();
@@ -114,7 +109,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ onNavigateToTeam, onBa
           <div className="absolute inset-0 border-4 border-t-red-600 border-r-red-600 rounded-full animate-spin" />
         </div>
         <p className="italic font-mono text-slate-500 text-xs uppercase tracking-widest animate-pulse">
-          Calcul de la télémétrie de saison...
+          Synchronisation avec le serveur...
         </p>
       </div>
     );
@@ -122,7 +117,6 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ onNavigateToTeam, onBa
 
   return (
     <div className="w-full bg-slate-950 text-white p-4 md:p-10 font-sans">
-      {/* RETOUR TECHNIQUE STYLE PADDOCK */}
       <div className="max-w-6xl mx-auto mb-6">
         <button
           onClick={onBack}
@@ -136,9 +130,11 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ onNavigateToTeam, onBa
 
       <header className="mb-12 max-w-6xl mx-auto border-l-4 border-red-600 pl-5">
         <h1 className="text-4xl md:text-5xl font-black italic uppercase tracking-tighter">
-          Suivi de Saison <span className="text-red-600 drop-shadow-[0_0_10px_rgba(220,38,38,0.3)]">Course par Course</span>
-        </h1> 
-        
+          Suivi de Saison{" "}
+          <span className="text-red-600 drop-shadow-[0_0_10px_rgba(220,38,38,0.3)]">
+            Course par Course
+          </span>
+        </h1>
       </header>
 
       {error && (
@@ -152,20 +148,27 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ onNavigateToTeam, onBa
           {calendar.map((item) => {
             const currentRoundInt = parseInt(item.round, 10);
             const isPassed = currentRoundInt <= lastSyncedRound;
-            const isAlreadySelected = configuredRounds.includes(currentRoundInt);
-            
-            let cardStyle = "border-slate-800/80 hover:border-red-600 hover:shadow-[0_0_25px_rgba(220,38,38,0.15)]";
-            let badgeStyle = "bg-slate-950 border-slate-800 text-red-500 group-hover:border-red-600";
+            const isAlreadySelected =
+              configuredRounds.includes(currentRoundInt);
+
+            let cardStyle =
+              "border-slate-800/80 hover:border-red-600 hover:shadow-[0_0_25px_rgba(220,38,38,0.15)]";
+            let badgeStyle =
+              "bg-slate-950 border-slate-800 text-red-500 group-hover:border-red-600";
             let badgeText = "🏁 RECAP POINTS";
 
             if (!isPassed) {
               if (isAlreadySelected) {
-                cardStyle = "border-blue-500/50 hover:border-blue-400 bg-gradient-to-b from-blue-950/20 to-slate-900/40 shadow-[0_0_20px_rgba(59,130,246,0.1)]";
-                badgeStyle = "bg-blue-600 border-blue-500 text-white group-hover:bg-blue-500 font-black";
+                cardStyle =
+                  "border-blue-500/50 hover:border-blue-400 bg-gradient-to-b from-blue-950/20 to-slate-900/40 shadow-[0_0_20px_rgba(59,130,246,0.1)]";
+                badgeStyle =
+                  "bg-blue-600 border-blue-500 text-white group-hover:bg-blue-500 font-black";
                 badgeText = "🔹 LOCK ED";
               } else {
-                cardStyle = "border-emerald-500/40 hover:border-emerald-400 bg-gradient-to-b from-emerald-950/10 to-slate-900/40 shadow-[0_0_20px_rgba(16,185,129,0.05)]";
-                badgeStyle = "bg-emerald-500 border-emerald-400 text-slate-950 group-hover:bg-emerald-400 font-black";
+                cardStyle =
+                  "border-emerald-500/40 hover:border-emerald-400 bg-gradient-to-b from-emerald-950/10 to-slate-900/40 shadow-[0_0_20px_rgba(16,185,129,0.05)]";
+                badgeStyle =
+                  "bg-emerald-500 border-emerald-400 text-slate-950 group-hover:bg-emerald-400 font-black";
                 badgeText = "➕ ALIGNER";
               }
             }
@@ -184,9 +187,13 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ onNavigateToTeam, onBa
                     <h3 className="text-xl font-black uppercase italic tracking-tight text-white group-hover:text-red-500 transition-colors">
                       {item.name}
                     </h3>
-                    <span className="text-[11px] text-slate-400 font-medium block">📍 {item.location}</span>
+                    <span className="text-[11px] text-slate-400 font-medium block">
+                      📍 {item.location}
+                    </span>
                   </div>
-                  <div className={`whitespace-nowrap flex-shrink-0 px-2.5 py-1.5 rounded text-[9px] font-mono font-black tracking-widest uppercase transition-all skew-x-[-10deg] border ${badgeStyle}`}>
+                  <div
+                    className={`whitespace-nowrap flex-shrink-0 px-2.5 py-1.5 rounded text-[9px] font-mono font-black tracking-widest uppercase transition-all skew-x-[-10deg] border ${badgeStyle}`}
+                  >
                     {badgeText}
                   </div>
                 </div>
@@ -204,36 +211,30 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ onNavigateToTeam, onBa
         </div>
       </main>
 
-      {/* MODAL SCORES ULTRA-DYNAMIQUE */}
+      {/* MODAL SCORES */}
       {selectedGP && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-lg transition-all duration-300">
           <div className="bg-slate-950 border-2 border-slate-800 rounded-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto p-6 md:p-8 relative shadow-[0_0_50px_rgba(220,38,38,0.15)] animate-[modalEnter_0.2s_ease-out]">
-            <button 
-              onClick={() => { setSelectedGP(null); setRoundScores(null); }}
+            <button
+              onClick={() => {
+                setSelectedGP(null);
+                setRoundScores(null);
+              }}
               className="absolute top-0 right-0 p-6 z-50 text-slate-400 font-black text-xs uppercase tracking-wider transition-all cursor-pointer group select-none"
             >
               <div className="bg-slate-900 border border-slate-800 group-hover:border-red-600 group-hover:text-white rounded-lg px-4 py-2 skew-x-[-10deg] pointer-events-none">
                 ✕ Fermer Window
               </div>
             </button>
-            <div className="border-b-2 border-slate-900 pb-5 mb-8 relative">
-              <div className="absolute bottom-0 left-0 w-16 h-[2px] bg-red-600" />
-              <span className="text-[10px] font-mono text-red-500 font-black uppercase tracking-widest bg-red-950/30 px-2 py-0.5 rounded border border-red-900/30">Official Results Overview</span>
-              <h2 className="text-3xl md:text-4xl font-black uppercase tracking-tighter italic mt-2 text-white">{selectedGP.name}</h2>
-              {roundScores && (
-                <div className="mt-4 inline-flex items-center bg-red-600 text-white px-5 py-2 rounded-lg font-black italic tracking-tight shadow-lg shadow-red-950/50 transform -skew-x-6">
-                  <span className="text-xs uppercase font-bold tracking-wider text-red-100 not-italic mr-2">Total Week-end : </span>
-                  <span className="text-xl font-mono">
-                    {Math.max(0, roundScores.driversDetails.reduce((sum, d) => sum + d.total, 0))} PTS
-                  </span>
-                </div>
-              )}
+            <div className="border-b-2 border-slate-900 pb-5 mb-8">
+              <h2 className="text-3xl md:text-4xl font-black uppercase tracking-tighter italic mt-2 text-white">
+                {selectedGP.name}
+              </h2>
             </div>
             {loadingModal ? (
-              <div className="py-24 flex flex-col items-center">
-                <div className="w-10 h-10 border-4 border-red-600 border-t-transparent rounded-full animate-spin mb-3"></div>
-                <p className="text-xs font-mono uppercase tracking-widest text-slate-500 italic animate-pulse">Calcul de vos points Fantasy...</p>
-              </div>
+              <p className="text-center animate-pulse">
+                Calcul de vos points Fantasy...
+              </p>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-center">
                 {roundScores?.driversDetails.map((detail) => (

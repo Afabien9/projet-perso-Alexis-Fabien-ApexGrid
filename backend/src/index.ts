@@ -60,6 +60,22 @@ async function getSeasonConfig(round: string) {
 }
 
 /**
+ * @route   GET /api/last-synced-round
+ * @desc    Récupère dynamiquement le dernier round synchronisé en BDD
+ */
+app.get("/api/last-synced-round", async (req: Request, res: Response) => {
+  try {
+    const result = await db.query(
+      "SELECT MAX(round::integer) as max_round FROM public.race_results",
+    );
+    res.json({ lastSyncedRound: result.rows[0].max_round || 0 });
+  } catch (error) {
+    console.error("Erreur récupération last-synced-round :", error);
+    res.status(500).json({ error: "Erreur lors de la récupération" });
+  }
+});
+
+/**
  * @route   GET /api/calendar
  * @desc    Récupère le calendrier complet de la saison 2026 depuis la table Supabase
  * @access  Public
@@ -73,12 +89,9 @@ app.get("/api/calendar", async (req: Request, res: Response) => {
     res.status(200).json(result.rows);
   } catch (error) {
     console.error("Erreur récupération calendrier BDD :", error);
-    res
-      .status(500)
-      .json({
-        message:
-          "Impossible de charger le calendrier depuis la base de données.",
-      });
+    res.status(500).json({
+      message: "Impossible de charger le calendrier depuis la base de données.",
+    });
   }
 });
 
@@ -208,11 +221,9 @@ app.post("/save-team", verifyToken, async (req: any, res: any) => {
   const targetRound = round || "6";
 
   if (!driverIds || !Array.isArray(driverIds) || driverIds.length !== 5) {
-    return res
-      .status(400)
-      .json({
-        message: "La liste des pilotes doit contenir exactement 5 profils.",
-      });
+    return res.status(400).json({
+      message: "La liste des pilotes doit contenir exactement 5 profils.",
+    });
   }
 
   try {
@@ -296,6 +307,51 @@ app.post("/admin/sync-data", verifyToken, isAdmin, (req: any, res: any) => {
   });
 });
 
+// --- Route Admin : Lister tous les utilisateurs ---
+app.get(
+  "/admin/users",
+  verifyToken,
+  isAdmin,
+  async (req: Request, res: Response) => {
+    try {
+      const result = await db.query(
+        "SELECT id, username, email, role FROM public.users ORDER BY username ASC",
+      );
+      res.json(result.rows);
+    } catch (error) {
+      console.error("Erreur récupération utilisateurs :", error);
+      res.status(500).json({ message: "Erreur serveur" });
+    }
+  },
+);
+
+// --- Route Admin : Changer le rôle ---
+app.patch(
+  "/admin/users/:id/role",
+  verifyToken,
+  isAdmin,
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const { role } = req.body;
+
+    if (!role || !["admin", "user"].includes(role)) {
+      return res.status(400).json({ message: "Rôle invalide" });
+    }
+
+    try {
+      await db.query("UPDATE public.users SET role = $1 WHERE id = $2", [
+        role,
+        id,
+      ]);
+      res.json({ message: "Rôle mis à jour avec succès" });
+    } catch (error) {
+      console.error("Erreur mise à jour rôle :", error);
+      res.status(500).json({ message: "Erreur serveur" });
+    }
+  },
+);
+
 app.listen(port, () => {
   console.log(`🚀 Serveur ApexGrid lancé sur le port ${port}`);
 });
+  
