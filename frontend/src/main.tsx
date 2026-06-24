@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { io } from "socket.io-client";
 
 // Pages & Components
 import AuthPage from "./pages/AuthPage";
@@ -13,18 +14,19 @@ import { LeaderboardPage } from "./pages/LeaderboardPage";
 import { WikiPage } from "./pages/WikiPage";
 import { DriverDetails } from "./pages/DriverDetails";
 import { AdminPanel } from "./pages/AdminPanel";
+import { ContactPage } from "./pages/ContactPage";
 
 import { authService } from "./services/api";
 import "./index.css";
 
 type ActiveView =
   | "dashboard"
-  | "team"
   | "results"
   | "calendar"
   | "history"
   | "leaderboard"
   | "wiki"
+  | "contact"
   | "admin";
 
 const MainLayout = () => {
@@ -32,8 +34,15 @@ const MainLayout = () => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [selectedRound, setSelectedRound] = useState<string>("1");
   const [activeTargetRound, setActiveTargetRound] = useState<string | undefined>(undefined);
-  const [returnToView, setReturnToView] = useState<ActiveView>("dashboard");
   const [selectedDriverId, setSelectedDriverId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const socket = io("http://localhost:3000");
+    socket.on("sync-completed", (data) => {
+      alert(`🔔 ${data.message}`);
+    });
+    return () => { socket.disconnect(); };
+  }, []);
 
   const getUserRole = () => {
     const token = localStorage.getItem("apex_token");
@@ -53,7 +62,7 @@ const MainLayout = () => {
   };
 
   return (
-    <div className="bg-slate-950 min-h-screen text-white font-sans relative overflow-x-hidden">
+    <div className="bg-slate-950 min-h-screen text-white font-sans relative overflow-hidden">
       {/* Bouton Burger */}
       <button
         onClick={() => setIsOpen(!isOpen)}
@@ -74,6 +83,7 @@ const MainLayout = () => {
           <button onClick={() => { setCurrentView("calendar"); setIsOpen(false); }} className="w-full text-left font-bold uppercase text-xs p-3 rounded-lg border border-slate-800 hover:bg-slate-800">📅 Calendrier</button>
           <button onClick={() => { setCurrentView("history"); setIsOpen(false); }} className="w-full text-left font-bold uppercase text-xs p-3 rounded-lg border border-slate-800 hover:bg-slate-800">📜 Historique</button>
           <button onClick={() => { setCurrentView("leaderboard"); setIsOpen(false); }} className="w-full text-left font-bold uppercase text-xs p-3 rounded-lg border border-slate-800 hover:bg-slate-800">🏆 Classement</button>
+          <button onClick={() => { setCurrentView("contact"); setIsOpen(false); }} className="w-full text-left font-bold uppercase text-xs p-3 rounded-lg border border-slate-800 hover:bg-slate-800">📩 Contact</button>
 
           {userRole === "admin" && (
             <button onClick={() => { setCurrentView("admin"); setIsOpen(false); }} className="w-full text-left font-bold text-xs p-3 rounded-lg border border-amber-900 text-amber-500 hover:bg-amber-900/20">⚙️ Admin</button>
@@ -108,6 +118,7 @@ const MainLayout = () => {
           />
         )}
 
+        {/* Note: 'team' view is accessed via 'history' */}
         {currentView === "team" && (
           <MyTeamPage 
             targetRound={activeTargetRound} 
@@ -119,6 +130,9 @@ const MainLayout = () => {
         {currentView === "wiki" && selectedDriverId !== null && <DriverDetails driverId={selectedDriverId} onBack={() => setSelectedDriverId(null)} />}
         
         {currentView === "leaderboard" && <LeaderboardPage onBack={() => setCurrentView("dashboard")} />}
+        {currentView === "contact" && <ContactPage onBack={() => setCurrentView("dashboard")} />}
+
+
         {currentView === "admin" && <AdminPanel />}
       </div>
     </div>

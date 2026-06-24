@@ -5,6 +5,8 @@ import cors from "cors";
 import dotenv from "dotenv";
 import { exec } from "child_process";
 import resultsRoutes from "./root/resultsRoutes.js";
+import { createServer } from "http";
+import { Server } from "socket.io";
 
 // Imports des contrôleurs et middlewares
 import { register, login } from "./controllers/authController.js";
@@ -23,6 +25,15 @@ dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3000;
+const httpServer = createServer(app);
+const io = new Server(httpServer, {
+  cors: {
+    origin: "*", // Adjust for production
+    methods: ["GET", "POST"]
+  }
+});
+
+app.set("io", io);
 
 app.use(cors());
 app.use(express.json());
@@ -31,6 +42,37 @@ app.use("/api/results", resultsRoutes);
 // --- Authentification ---
 app.post("/register", register);
 app.post("/login", login);
+
+// --- Webhook pour notifier la synchro ---
+app.post("/api/sync-notify", (req: Request, res: Response) => {
+  const { round } = req.body;
+  console.log(`📡 Notification de synchronisation reçue pour le round ${round}`);
+  io.emit("sync-completed", { round, message: `Synchronisation du Round ${round} terminée` });
+  res.sendStatus(200);
+});
+
+// --- Route Contact : Soumettre une suggestion ---
+app.post("/api/contact", verifyToken, async (req: any, res: Response) => {
+  const { message } = req.body;
+  const userId = req.user.id;
+
+  if (!message) {
+    return res.status(400).json({ message: "Le message est requis." });
+  }
+
+  try {
+    await db.query(
+      "INSERT INTO public.suggestions (user_id, message, created_at) VALUES ($1, $2, NOW())",
+      [userId, message]
+    );
+    console.log(`📩 Suggestion reçue de l'utilisateur ${userId}: ${message}`);
+    res.json({ message: "Suggestion envoyée avec succès !" });
+  } catch (error) {
+    console.error("Erreur lors de la sauvegarde de la suggestion :", error);
+    console.log(`📩 [LOG ONLY] Suggestion reçue de l'utilisateur ${userId}: ${message}`);
+    res.json({ message: "Suggestion reçue (stockée en log)." });
+  }
+});
 
 /**
  * Fonction utilitaire interne pour charger la configuration de saison depuis la BDD
@@ -351,7 +393,72 @@ app.patch(
   },
 );
 
-app.listen(port, () => {
+// --- Route Admin : Supprimer un utilisateur ---
+app.delete(
+  "/admin/users/:id",
+  verifyToken,
+  isAdmin,
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+
+    try {
+      await db.query("DELETE FROM public.users WHERE id = $1", [id]);
+      res.json({ message: "Utilisateur supprimé avec succès" });
+    } catch (error) {
+      console.error("Erreur suppression utilisateur :", error);
+      res.status(500).json({ message: "Erreur lors de la suppression" });
+    }
+  },
+);
+
+// ... existing routes ...
+
+// --- Route Admin : Lister toutes les suggestions ---
+app.get(
+  "/admin/suggestions",
+  verifyToken,
+  isAdmin,
+  async (req: Request, res: Response) => {
+    try {
+      const result = await db.query(
+        "SELECT s.*, u.username FROM public.suggestions s JOIN public.users u ON s.user_id = u.id ORDER BY s.created_at DESC",
+      );
+      res.json(result.rows);
+    } catch (error) {
+      console.error("Erreur récupération suggestions :", error);
+      res.status(500).json({ message: "Erreur serveur" });
+    }
+  },
+);
+
+// --- Route Admin : Mettre à jour le statut d'une suggestion ---
+app.patch(
+  "/admin/suggestions/:id",
+  verifyToken,
+  isAdmin,
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!status || !["pending", "validated", "refused"].includes(status)) {
+      return res.status(400).json({ message: "Statut invalide" });
+    }
+
+    try {
+      await db.query("UPDATE public.suggestions SET status = $1 WHERE id = $2", [
+        status,
+        id,
+      ]);
+      res.json({ message: "Statut mis à jour avec succès" });
+    } catch (error) {
+      console.error("Erreur mise à jour statut suggestion :", error);
+      res.status(500).json({ message: "Erreur serveur" });
+    }
+  },
+);
+
+httpServer.listen(port, () => {
+// ... existing code ...
   console.log(`🚀 Serveur ApexGrid lancé sur le port ${port}`);
 });
   

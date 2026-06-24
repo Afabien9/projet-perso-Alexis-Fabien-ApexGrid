@@ -13,6 +13,7 @@ if (!JWT_SECRET) {
   );
 }
 
+// enregistrer utilisateur hachage mot passe base données
 export const register = async (req: any, res: any) => {
   const { username, email, password } = req.body;
   const hash = await bcrypt.hash(password, 10);
@@ -27,6 +28,7 @@ export const register = async (req: any, res: any) => {
   }
 };
 
+// connecter utilisateur verifier identifiants generer jeton jwt
   export const login = async (req: any, res: any) => {
     const { email, password } = req.body;
     const user = (

@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 const JWT_SECRET = process.env.JWT_SECRET || "";
 
+// valider token accès jwt middleware
 export const verifyToken = (req: any, res: any, next: any) => {
     const token = req.headers.authorization?.split(' ')[1];
 
@@ -21,6 +22,7 @@ export const verifyToken = (req: any, res: any, next: any) => {
 };
 
 
+// verifier droits administrateur accès
 export const isAdmin = (req: any, res: any, next: any) => {
     if (req.user && req.user.role === 'admin') {
     next();

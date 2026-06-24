@@ -128,7 +128,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({
         </button>
       </div>
 
-      <header className="mb-12 max-w-6xl mx-auto border-l-4 border-red-600 pl-5">
+      <header className="mb-12 max-w-6xl mx-auto">
         <h1 className="text-4xl md:text-5xl font-black italic uppercase tracking-tighter">
           Suivi de Saison{" "}
           <span className="text-red-600 drop-shadow-[0_0_10px_rgba(220,38,38,0.3)]">
@@ -163,13 +163,13 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({
                   "border-blue-500/50 hover:border-blue-400 bg-gradient-to-b from-blue-950/20 to-slate-900/40 shadow-[0_0_20px_rgba(59,130,246,0.1)]";
                 badgeStyle =
                   "bg-blue-600 border-blue-500 text-white group-hover:bg-blue-500 font-black";
-                badgeText = "🔹 LOCK ED";
+                badgeText = "Valider";
               } else {
                 cardStyle =
                   "border-emerald-500/40 hover:border-emerald-400 bg-gradient-to-b from-emerald-950/10 to-slate-900/40 shadow-[0_0_20px_rgba(16,185,129,0.05)]";
                 badgeStyle =
                   "bg-emerald-500 border-emerald-400 text-slate-950 group-hover:bg-emerald-400 font-black";
-                badgeText = "➕ ALIGNER";
+                badgeText = "Composer";
               }
             }
 

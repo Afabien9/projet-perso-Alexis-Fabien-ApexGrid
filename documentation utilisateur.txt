@@ -1,0 +1,33 @@
+========================================================
+GUIDE UTILISATEUR - APEXGRID FANTASY F1
+========================================================
+
+Bienvenue sur ApexGrid, votre centre de commandement pour la stratégie Fantasy F1. Ce guide vous aidera à naviguer et à optimiser vos performances.
+
+1. TABLEAU DE BORD (DASHBOARD)
+------------------------------
+C'est votre point d'entrée. Depuis le menu latéral, vous pouvez accéder aux sections suivantes :
+
+- CLASSEMENT : Consultez les scores en temps réel de tous les utilisateur.
+- CALENDRIER : Visualisez le calendrier de la saison 2026 et accédez aux résultats.
+- HISTORIQUE : Analysez vos performances passées. C'est ici que vous gérez vos équipes pour les différents Grands Prix.
+- WIKI F1 : Accédez aux statistiques et informations détaillées sur les pilotes.
+
+2. GESTION DES ÉQUIPES
+----------------------
+La sélection et la gestion de vos équipes se font exclusivement via la section HISTORIQUE.
+- Pour créer ou modifier une équipe pour un Grand Prix spécifique, rendez-vous dans l'Historique.
+- Assurez-vous de valider vos choix avant le verrouillage.
+
+3. RÉSULTATS
+------------
+Vous pouvez consulter les résultats des courses passées via le CALENDRIER (en cliquant sur un GP) ou via l'HISTORIQUE pour voir l'impact sur vos scores.
+
+4. NOTIFICATIONS
+----------------
+Restez à l'affût ! Lors des mises à jour des scores ou de la synchronisation des données après un Grand Prix, vous recevrez une notification en temps réel directement dans votre navigateur.
+
+--------------------------------------------------------
+Bonne chance pour le championnat !
+L'équipe ApexGrid.
+========================================================

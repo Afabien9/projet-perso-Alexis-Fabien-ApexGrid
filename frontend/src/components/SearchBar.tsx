@@ -5,8 +5,10 @@ interface Driver {
   driver_id: string;
   forename: string;
   surname: string;
+  driver_stats_view: { total_championships: number }[];
 }
 
+// recherche pilotes suggestion temps réel base données
 export const SearchBar = ({ onSelectDriver }: { onSelectDriver: (id: string) => void }) => {
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState<Driver[]>([]);
@@ -14,21 +16,19 @@ export const SearchBar = ({ onSelectDriver }: { onSelectDriver: (id: string) => 
   const handleSearch = async (value: string) => {
     setQuery(value);
 
-    // On ne lance la recherche qu'à partir de 2 caractères pour ne pas surcharger la BDD
     if (value.length < 2) {
       setSuggestions([]);
       return;
     }
 
-    // Requête Supabase : cherche les noms ou prénoms commençant par la valeur saisie
     const { data, error } = await supabase
       .from("drivers_wiki")
-      .select("driver_id, forename, surname")
+      .select("driver_id, forename, surname, driver_stats_view(total_championships)")
       .or(`surname.ilike.${value}%,forename.ilike.${value}%`)
       .limit(5);
 
     if (!error && data) {
-      setSuggestions(data);
+      setSuggestions(data as any);
     }
   };
 
@@ -42,22 +42,31 @@ export const SearchBar = ({ onSelectDriver }: { onSelectDriver: (id: string) => 
         className="w-full bg-slate-900 border border-slate-700 text-white p-4 rounded-xl focus:outline-none focus:border-red-600 transition-colors"
       />
       
-      {/* Affichage des suggestions en dessous de l'input */}
       {suggestions.length > 0 && (
         <ul className="absolute z-50 w-full mt-2 bg-slate-800 border border-slate-700 rounded-xl overflow-hidden shadow-2xl">
-          {suggestions.map((driver) => (
-            <li
-              key={driver.driver_id}
-              onClick={() => {
-                onSelectDriver(driver.driver_id);
-                setSuggestions([]); // On vide la liste après clic
-                setQuery("");       // On vide l'input
-              }}
-              className="p-4 hover:bg-red-600 cursor-pointer text-white border-b border-slate-700 last:border-0 transition-colors"
-            >
-              <span className="font-bold">{driver.surname}</span> {driver.forename}
-            </li>
-          ))}
+          {suggestions.map((driver) => {
+            const championships = driver.driver_stats_view?.[0]?.total_championships || 0;
+            return (
+              <li
+                key={driver.driver_id}
+                onClick={() => {
+                  onSelectDriver(driver.driver_id);
+                  setSuggestions([]);
+                  setQuery("");
+                }}
+                className="p-4 hover:bg-red-600 cursor-pointer text-white border-b border-slate-700 last:border-0 transition-colors flex justify-between items-center"
+              >
+                <span>
+                  <span className="font-bold">{driver.surname}</span> {driver.forename}
+                </span>
+                {championships > 0 && (
+                  <span className="text-[10px] bg-red-900 text-white px-2 py-0.5 rounded-full font-black">
+                    {championships} TITRE{championships > 1 ? "S" : ""}
+                  </span>
+                )}
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>

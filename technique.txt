@@ -1,0 +1,63 @@
+========================================================
+DOCUMENTATION TECHNIQUE DÉTAILLÉE - APEXGRID FANTASY F1
+========================================================
+
+1. ARCHITECTURE & STRUCTURE DU PROJET
+--------------------------------------
+Le projet repose sur une architecture découplée :
+- Backend : Serveur Node.js (Express), gérant la logique métier, le calcul des points, l'accès à la BDD et la communication en temps réel.
+- Frontend : Application SPA (React, Vite, TailwindCSS) pour une expérience utilisateur rapide et interactive.
+- Base de données : PostgreSQL (via Supabase), stockage centralisé des données de saison, résultats de course et profils utilisateurs.
+
+2. STRUCTURE DE LA BASE DE DONNÉES (SUPABASE/POSTGRES)
+------------------------------------------------------
+- public.users: Authentification (ID, username, email, rôle admin).
+- public.user_teams: Enregistrement des équipes choisies par round (user_id, round, driver_ids).
+- public.race_results: Résultats officiels (round, driver_id, constructor_id, grid, position, points).
+- public.user_scores: Scores calculés des utilisateurs (user_id, round, points).
+- public.season_config: Configuration dynamique (elite_ids, bottom_ids par round).
+- public.calendar: Calendrier officiel F1 (round, circuit, date).
+
+3. MÉCANISME DE SYNCHRONISATION (Backend Engine)
+-------------------------------------------------
+Le script `SyncManager.ts` orchestre la mise à jour des données :
+a. Ingestion : Récupère les résultats via l'API F1.
+b. Traitement : Identifie l'élite (bigFive) et le fond de grille (getBottomTeams) pour le calcul des bonus.
+c. Persistance : Met à jour `race_results`.
+d. Scoring :
+   - Parcours `user_teams` pour chaque round.
+   - Appelle `ScoringEngine.ts` pour calculer :
+     - Base Points (via position).
+     - Bonus Dépassement (overtake).
+     - Bonus Duel (team mate).
+     - Bonus Underdog (pour les pilotes en fond de grille).
+   - Met à jour `user_scores` avec le total calculé.
+e. Notification : Émet un événement Socket.io (`sync-completed`) via webhook pour notifier le frontend.
+
+4. API ENDPOINTS
+----------------
+- Authentification :
+  - POST /register, POST /login
+- Admin (Protégées - nécessite rôle admin) :
+  - POST /admin/sync-data : Lance la synchro.
+  - GET /admin/users : Liste des utilisateurs.
+  - PATCH /admin/users/:id/role : Mise à jour rôle.
+  - DELETE /admin/users/:id : Suppression utilisateur.
+- Utilisateur :
+  - POST /save-team : Sauvegarde équipe.
+  - GET /my-team : Récupère équipe.
+  - GET /my-teams-rounds : Rounds configurés.
+- Public :
+  - GET /team-scores : Calcul dynamique des scores.
+  - GET /score/:driverId : Score par pilote.
+  - GET /api/calendar : Liste des courses.
+  - GET /api/last-synced-round : Dernier round synchronisé.
+
+5. SÉCURITÉ
+-----------
+- JWT : Utilisé pour maintenir la session et valider les permissions dans les routes protégées via le middleware `authMiddleware.ts`.
+- CORS : Configuration pour permettre les requêtes venant du frontend.
+
+--------------------------------------------------------
+Dernière mise à jour : Juin 2026
+========================================================

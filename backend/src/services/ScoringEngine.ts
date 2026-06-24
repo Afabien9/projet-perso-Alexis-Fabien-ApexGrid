@@ -1,6 +1,6 @@
 import type { RaceResult } from "../models/RaceResult.js";
 
-
+// calculer points base position arrivee malus elite
 export const calculateUserPoints = (result: RaceResult, eliteIds: string[]): number => {
   const pointsTable = [12, 10, 8, 7, 6, 5, 4, 3, 2, 1];
   let score = pointsTable[Number(result.position) - 1] || 0;
@@ -12,7 +12,7 @@ export const calculateUserPoints = (result: RaceResult, eliteIds: string[]): num
   return score;
 };
 
-
+// calculer bonus equipier battu
 export const calculateTeamMateBonus = (
   currentDriver: RaceResult,
   allRaceResults: RaceResult[],
@@ -32,14 +32,14 @@ export const calculateTeamMateBonus = (
   return 0;
 };
 
-
+// calculer bonus depassement positions gagnees
 export const calculateOvertakeBonus = (result: RaceResult): number => {
   const positionGained = Number(result.grid) - Number(result.position);
   // Rapporte 1 points par place gagnée
   return positionGained > 0 ? positionGained * 1 : 0;
 };
 
-
+// calculer bonus exploit ecurie modeste
 export const calculateUnderdogBonus = (result: RaceResult, bottomTeamIds: string[]): number => {
   // Rapporte 15 points si une écurie de fond de grille finit dans le top 10
   if (bottomTeamIds.includes(result.constructorId) && Number(result.position) <= 10) {

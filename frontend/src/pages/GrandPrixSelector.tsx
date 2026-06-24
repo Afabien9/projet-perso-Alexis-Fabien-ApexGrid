@@ -16,7 +16,10 @@ interface GrandPrixSelectorProps {
   onBack: () => void;
 }
 
-export const GrandPrixSelector: React.FC<GrandPrixSelectorProps> = ({ onSelectRound, onBack }) => {
+export const GrandPrixSelector: React.FC<GrandPrixSelectorProps> = ({
+  onSelectRound,
+  onBack,
+}) => {
   const [grandPrixList, setGrandPrixList] = useState<GrandPrix[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -25,7 +28,9 @@ export const GrandPrixSelector: React.FC<GrandPrixSelectorProps> = ({ onSelectRo
     fetch("http://localhost:3000/api/calendar")
       .then((res) => {
         if (!res.ok) {
-          throw new Error("Impossible de synchroniser le calendrier depuis le serveur.");
+          throw new Error(
+            "Impossible de synchroniser le calendrier depuis le serveur.",
+          );
         }
         return res.json();
       })
@@ -57,8 +62,12 @@ export const GrandPrixSelector: React.FC<GrandPrixSelectorProps> = ({ onSelectRo
   if (error) {
     return (
       <div className="max-w-md mx-auto my-12 p-5 bg-red-950/30 border-2 border-red-900 rounded-xl text-center text-red-400 font-mono shadow-[0_0_30px_rgba(220,38,38,0.1)]">
-        <p className="font-black uppercase tracking-widest text-sm mb-1.5">⚠️ Défaut Réseau Telemetry</p>
-        <p className="text-slate-400 text-xs bg-slate-950/60 p-2 rounded border border-slate-900">{error}</p>
+        <p className="font-black uppercase tracking-widest text-sm mb-1.5">
+          ⚠️ Défaut Réseau Telemetry
+        </p>
+        <p className="text-slate-400 text-xs bg-slate-950/60 p-2 rounded border border-slate-900">
+          {error}
+        </p>
       </div>
     );
   }
@@ -77,11 +86,13 @@ export const GrandPrixSelector: React.FC<GrandPrixSelectorProps> = ({ onSelectRo
         </button>
       </div>
 
-      <header className="mb-12 max-w-6xl mx-auto border-l-4 border-red-600 pl-5 relative">
+      <header className="mb-12 max-w-6xl mx-auto">
         <h1 className="text-4xl md:text-5xl font-black italic uppercase tracking-tighter">
-          Calendrier <span className="text-red-600 drop-shadow-[0_0_10px_rgba(220,38,38,0.3)]">Grands Prix 2026</span>
+          Calendrier{" "}
+          <span className="text-red-600 drop-shadow-[0_0_10px_rgba(220,38,38,0.3)]">
+            Grands Prix 2026
+          </span>
         </h1>
-        
       </header>
 
       <main className="max-w-6xl mx-auto">
@@ -115,8 +126,7 @@ export const GrandPrixSelector: React.FC<GrandPrixSelectorProps> = ({ onSelectRo
                 />
               </div>
               <div className="w-full border-t border-slate-800/40 pt-3 mt-4 text-[9px] font-mono font-black uppercase tracking-widest text-slate-500 group-hover:text-slate-300 flex items-center justify-between">
-                <span>{gp.circuit.split(' ').slice(0, 2).join(' ')}...</span>
-                <span className="text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">ANALYSIS →</span>
+                <span>{gp.circuit}</span>
               </div>
             </button>
           ))}

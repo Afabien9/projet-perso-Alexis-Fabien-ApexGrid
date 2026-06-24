@@ -18,7 +18,9 @@ export function MyTeamPage({ targetRound, onBack }: MyTeamPageProps) {
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
-  const [raceName, setRaceName] = useState<string>(`GRAND PRIX ${currentRound}`);
+  const [raceName, setRaceName] = useState<string>(
+    `GRAND PRIX ${currentRound}`,
+  );
 
   const BUDGET_MAX = 100;
   const PILOTES_MAX = 5;
@@ -37,7 +39,7 @@ export function MyTeamPage({ targetRound, onBack }: MyTeamPageProps) {
     // 1. Chargement conjoint du Line-up utilisateur et du calendrier depuis l'API
     Promise.all([
       authService.getMyTeam(currentRound),
-      fetch("http://localhost:3000/api/calendar").then((res) => res.json())
+      fetch("http://localhost:3000/api/calendar").then((res) => res.json()),
     ])
       .then(([teamData, calendarData]: [any, GrandPrixInfo[]]) => {
         // Hydratation de l'équipe depuis le tableau natif _text
@@ -48,13 +50,18 @@ export function MyTeamPage({ targetRound, onBack }: MyTeamPageProps) {
         }
 
         // Recherche dynamique du nom du Grand Prix dans le calendrier de la BDD
-        const currentRace = calendarData.find((gp) => gp.round === currentRound);
+        const currentRace = calendarData.find(
+          (gp) => gp.round === currentRound,
+        );
         if (currentRace) {
           setRaceName(currentRace.name);
         }
       })
       .catch((err) => {
-        console.error("Erreur lors de la synchronisation des données d'ingénierie :", err);
+        console.error(
+          "Erreur lors de la synchronisation des données d'ingénierie :",
+          err,
+        );
       })
       .finally(() => {
         setLoading(false);
@@ -98,7 +105,7 @@ export function MyTeamPage({ targetRound, onBack }: MyTeamPageProps) {
     try {
       // Normalisation de sécurité de la casse de chaque identifiant pilote (minuscules)
       // pour garantir l'équivalence parfaite avec les contraintes textuelles SQL
-      const normalizedLineUp = myTeam.map(id => id.toLowerCase());
+      const normalizedLineUp = myTeam.map((id) => id.toLowerCase());
 
       // Transmission directe du tableau brut [] à ton service authService.saveTeam()
       await authService.saveTeam(normalizedLineUp, currentRound);
@@ -134,28 +141,22 @@ export function MyTeamPage({ targetRound, onBack }: MyTeamPageProps) {
           onClick={onBack}
           className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest px-4 py-2.5 rounded bg-slate-900 border border-slate-800 text-slate-400 hover:border-red-600 hover:text-white transition-all cursor-pointer group skew-x-[-10deg]"
         >
-          <span className="inline-block transform skew-x-[10deg]">
+          <span className="inline-block transform skew-x-10">
             ← RETOUR
           </span>
         </button>
       </div>
 
-      {/* HEADER TYPE MANAGEMENT DE CURIE */}
-      <header className="max-w-6xl mx-auto mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-l-4 border-red-600 pl-5">
+      <header className="max-w-6xl mx-auto mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 ">
         <div>
           <h1 className="text-4xl md:text-6xl font-black italic uppercase tracking-tighter leading-none">
             ApexGrid{" "}
-            <span className="text-red-600 drop-shadow-[0_0_10px_rgba(220,38,38,0.3)]">
-              Analytics
-            </span>
+            
           </h1>
-          <p className="text-slate-500 text-[10px] font-mono font-bold uppercase tracking-[0.3em] mt-1.5">
-            ApexGrid Fantasy Round {currentRound}
-          </p>
         </div>
         <div className="flex items-center">
-          <span className="bg-gradient-to-r from-emerald-600 to-emerald-500 border border-emerald-400 text-slate-950 text-[10px] font-mono font-black px-4 py-2 rounded uppercase tracking-widest skew-x-[-10deg] shadow-[0_0_15px_rgba(16,185,129,0.2)]">
-            <span className="inline-block transform skew-x-[10deg]">
+          <span className="bg-linear-to-r from-emerald-600 to-emerald-500 border border-emerald-400 text-slate-950 text-[10px] font-mono font-black px-4 py-2 rounded uppercase tracking-widest skew-x-[-10deg] shadow-[0_0_15px_rgba(16,185,129,0.2)]">
+            <span className="inline-block transform skew-x-10">
               {raceName}
             </span>
           </span>
@@ -164,7 +165,7 @@ export function MyTeamPage({ targetRound, onBack }: MyTeamPageProps) {
 
       <main className="max-w-6xl mx-auto space-y-8">
         {/* COMPTE-TOURS EN COMPOSANT DE BUDGET */}
-        <div className="bg-gradient-to-br from-slate-900 to-slate-900/60 p-6 rounded-xl border border-slate-800 shadow-[0_10px_30px_rgba(0,0,0,0.5)] flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
+        <div className="bg-linear-to-br from-slate-900 to-slate-900/60 p-6 rounded-xl border border-slate-800 shadow-[0_10px_30px_rgba(0,0,0,0.5)] flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-red-600" />
 
           <div className="flex-1 space-y-3">
@@ -194,7 +195,7 @@ export function MyTeamPage({ targetRound, onBack }: MyTeamPageProps) {
             </div>
 
             {/* Jauge Compte-tours unie sans dégradé */}
-            <div className="h-3 bg-slate-950 border border-slate-800 rounded-md overflow-hidden p-[2px]">
+            <div className="h-3 bg-slate-950 border border-slate-800 rounded-md overflow-hidden p-0.5">
               <div
                 className="h-full rounded bg-emerald-500 shadow-inner transition-all duration-500"
                 style={{ width: `${(budgetConsomme / BUDGET_MAX) * 100}%` }}
@@ -219,7 +220,7 @@ export function MyTeamPage({ targetRound, onBack }: MyTeamPageProps) {
               }`}
             >
               <span className="inline-block transform skew-x-[8deg]">
-                {isSaving ? "TRANSMISSION..." : `🔒 TRANSMETTRE L'ALIGNEMENT`}
+                {isSaving ? "TRANSMISSION..." : `VALIDER L'ÉQUIPE`}
               </span>
             </button>
           </div>
@@ -245,7 +246,7 @@ export function MyTeamPage({ targetRound, onBack }: MyTeamPageProps) {
                   onClick={() => toggleDriver(driver.id)}
                   className={`group relative flex flex-col items-center p-2 rounded-xl border-2 transition-all duration-200 cursor-pointer overflow-hidden ${
                     isChosen
-                      ? "border-red-600 bg-gradient-to-b from-red-950/40 to-slate-900/90 shadow-[0_0_20px_rgba(220,38,38,0.25)]"
+                      ? "border-red-600 bg-linear-to-b from-red-950/40 to-slate-900/90 shadow-[0_0_20px_rgba(220,38,38,0.25)]"
                       : "border-slate-800/80 bg-slate-900/40 hover:border-slate-600 hover:bg-slate-900/80"
                   }`}
                 >
@@ -255,8 +256,8 @@ export function MyTeamPage({ targetRound, onBack }: MyTeamPageProps) {
                   </div>
 
                   {/* Photo pilote asymétrique */}
-                  <div className="aspect-[4/5] w-full overflow-hidden rounded-lg mb-2 relative bg-slate-950 border border-slate-800/40">
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-80 z-1" />
+                  <div className="aspect-4/5 w-full overflow-hidden rounded-lg mb-2 relative bg-slate-950 border border-slate-800/40">
+                    <div className="absolute inset-0 bg-linear-to-t from-slate-950 via-transparent to-transparent opacity-80 z-1" />
                     <img
                       src={driver.image}
                       alt={driver.name}

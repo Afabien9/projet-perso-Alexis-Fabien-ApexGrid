@@ -5,9 +5,7 @@ import * as ScoringEngine from "../services/ScoringEngine.js";
 import type { RaceResult } from "../models/RaceResult.js";
 import { db } from "../config/ds.js";
 
-/**
- * Fonction utilitaire interne pour charger l'élite et le fond de grille depuis la BDD
- */
+// chargement configuration elite fond grille depuis base données
 async function getSeasonConfig(round: string): Promise<{ eliteIds: string[]; bottomTeamIds: string[] }> {
   let eliteIds: string[] = [];
   let bottomTeamIds: string[] = [];
@@ -35,14 +33,11 @@ async function getSeasonConfig(round: string): Promise<{ eliteIds: string[]; bot
   };
 }
 
-/**
- * @route   GET /api/results/:Round
- * @desc    Récupère les résultats de course globaux d'un round (Grille complète des 22 pilotes depuis la BDD)
- */
+// recuperer resultats course round donne base donnees
 export const getResultsByRound = async (req: Request, res: Response) => {
   try {
     const Round = (req.params.Round || req.params.round || "") as string;
-    
+
     if (!Round) {
       return res.status(400).json({ message: "Le numéro du round est requis." });
     }
@@ -79,10 +74,7 @@ export const getResultsByRound = async (req: Request, res: Response) => {
   }
 };
 
-/**
- * @route   GET /api/results/user/selected-ranking
- * @desc    Calcule le classement général cumulé de la saison pour les pilotes de l'utilisateur via la BDD
- */
+// calculer classement general saison pilote utilisateur base donnees
 export const getSelectedRanking = async (req: any, res: any) => {
   try {
     const userId = req.user.id;
@@ -108,12 +100,12 @@ export const getSelectedRanking = async (req: any, res: any) => {
 
     const allConfigs = await db.query("SELECT round, key, value FROM public.season_config");
     const configMap: Record<string, { eliteIds: string[]; bottomTeamIds: string[] }> = {};
-    
+
     allConfigs.rows.forEach(row => {
       if (!configMap[row.round]) {
         configMap[row.round] = { eliteIds: [], bottomTeamIds: [] };
       }
-      
+
       const currentConfig = configMap[row.round]!;
       if (row.key === "elite_ids") currentConfig.eliteIds = row.value;
       if (row.key === "bottom_ids") currentConfig.bottomTeamIds = row.value;
@@ -149,7 +141,7 @@ export const getSelectedRanking = async (req: any, res: any) => {
       selectedDrivers.forEach((driverId) => {
         const driverKey = driverId.toLowerCase();
         const driverData = raceResults.find((r) => r.driverId.toLowerCase() === driverKey);
-        
+
         if (driverData && cumulativeRanking[driverKey]) {
           const baseScore = ScoringEngine.calculateUserPoints(driverData, eliteIds);
           const bonusDepassement = ScoringEngine.calculateOvertakeBonus(driverData);
@@ -176,10 +168,7 @@ export const getSelectedRanking = async (req: any, res: any) => {
   }
 };
 
-/**
- * @route   GET /api/results/user/round-details/:Round
- * @desc    Récupère la fiche de score détaillée course par course
- */
+// recuperer fiche score detaillee utilisateur round donne
 export const getUserRoundDetails = async (req: any, res: Response) => {
   try {
     const Round = (req.params.Round || req.params.round || "") as string;
@@ -257,10 +246,7 @@ export const getUserRoundDetails = async (req: any, res: Response) => {
   }
 };
 
-/**
- * @route   GET /api/results/leaderboard/round/:Round
- * @desc    Calcule le classement AUTOMATIQUE et en temps réel de tous les UTILISATEURS pour un round spécifique
- */
+// calculer classement automatique utilisateurs round specifique
 export const getRoundLeaderboard = async (req: Request, res: Response) => {
   try {
     const Round = (req.params.Round || req.params.round || "") as string;
@@ -313,10 +299,7 @@ export const getRoundLeaderboard = async (req: Request, res: Response) => {
   }
 };
 
-/**
- * @route   GET /api/results/leaderboard/season
- * @desc    Calcule automatiquement le classement général cumulé de la saison de tous les utilisateurs
- */
+// calculer classement automatique cumulatif saison utilisateurs
 export const getSeasonLeaderboard = async (req: Request, res: Response) => {
   try {
     const allRaceRecords = await db.query(
@@ -335,7 +318,7 @@ export const getSeasonLeaderboard = async (req: Request, res: Response) => {
 
     const allConfigs = await db.query("SELECT round, key, value FROM public.season_config");
     const configMap: Record<string, { eliteIds: string[]; bottomTeamIds: string[] }> = {};
-    
+
     allConfigs.rows.forEach(row => {
       if (!configMap[row.round]) configMap[row.round] = { eliteIds: [], bottomTeamIds: [] };
       const currentConfig = configMap[row.round]!;
@@ -373,12 +356,12 @@ export const getSeasonLeaderboard = async (req: Request, res: Response) => {
 
     const leaderboard = Object.keys(userScoresMap).map((username) => ({
       username,
-      points: userScoresMap[username] || 0, // Sécurité anti-undefined pour le typage strict
+      points: userScoresMap[username] || 0,
       driversLineUp: []
     }));
 
     const sortedLeaderboard = leaderboard
-      .sort((a, b) => (b.points || 0) - (a.points || 0)) // Initialisation par défaut pour le tri strict
+      .sort((a, b) => (b.points || 0) - (a.points || 0))
       .map((user, index) => ({ rank: index + 1, ...user }));
 
     return res.status(200).json(sortedLeaderboard);

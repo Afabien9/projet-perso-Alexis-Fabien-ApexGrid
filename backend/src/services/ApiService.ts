@@ -6,6 +6,7 @@ import type { promises } from "node:dns";
 import { response } from "express";
 const BASE_URL = "https://api.jolpi.ca/ergast/f1";
 
+// Récupère résultats course
 export const getRaceResult = async (
   year: string,
   round: string,
@@ -32,6 +33,7 @@ export const getRaceResult = async (
   }
 };
 
+// Identifie top 5 pilotes
 export const bigFive = async (): Promise<string[]> => {
   try {
     const reponse = await fetch(
@@ -57,6 +59,7 @@ export const bigFive = async (): Promise<string[]> => {
   }
 };
 
+// Identifie équipes fond grille
 export const getBottomTeams = async (): Promise<string[]> => {
   try {
     const response = await fetch(

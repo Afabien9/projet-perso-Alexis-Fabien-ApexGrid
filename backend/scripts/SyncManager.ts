@@ -4,6 +4,7 @@ import { bigFive, getBottomTeams, getRaceResult } from '../src/services/ApiServi
 import * as ScoringEngine from '../src/services/ScoringEngine.js';
 import type { RaceResult } from '../src/models/RaceResult.js';
 import { db } from '../src/config/ds.js';
+import axios from 'axios';
 
 async function runSync() {
   // Extraction du paramètre --round passé en commande npm
@@ -163,6 +164,15 @@ async function runSync() {
     
     console.log("--- ✨ TOUTES LES DONNÉES SONT À JOUR DIRECTEMENT EN BDD ---");
     console.table(syncLog);
+    
+    // Notification WebSocket via Webhook
+    try {
+        await axios.post('http://localhost:3000/api/sync-notify', { round: roundArg });
+        console.log("🔔 Notification WebSocket envoyée.");
+    } catch (e) {
+        console.error("❌ Échec envoi notification WebSocket :", e);
+    }
+    
     process.exit(0);
 
   } catch (error) {

@@ -35,7 +35,6 @@ export const WikiPage = ({
       return;
     }
 
-    // Requête sécurisée
     const { data, error } = await supabase
       .from("drivers_wiki")
       .select(
@@ -59,22 +58,21 @@ export const WikiPage = ({
 
   return (
     <div className="w-full bg-slate-950 text-white p-4 md:p-10 font-sans">
-      {/* Bouton Retour sécurisé */}
       <div className="max-w-6xl mx-auto mb-6">
-    <button
-  onClick={(e) => {
-    e.preventDefault();
-    onBack ? onBack() : (window.location.href = "/");
-  }}
-  className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest px-4 py-2.5 rounded bg-slate-900 border border-slate-800 text-slate-400 hover:border-red-600 hover:text-white transition-all cursor-pointer group skew-x-[-10deg]"
->
-  <span className="inline-block transform skew-x-[10deg]">
-    ← RETOUR
-  </span>
-</button>
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            onBack ? onBack() : (window.location.href = "/");
+          }}
+          className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest px-4 py-2.5 rounded bg-slate-900 border border-slate-800 text-slate-400 hover:border-red-600 hover:text-white transition-all cursor-pointer group skew-x-[-10deg]"
+        >
+          <span className="inline-block transform skew-x-[10deg]">
+            ← RETOUR
+          </span>
+        </button>
       </div>
 
-      <header className="mb-12 max-w-6xl mx-auto border-l-4 border-red-600 pl-5">
+      <header className="mb-12 max-w-6xl mx-auto">
         <h1 className="text-4xl md:text-5xl font-black italic uppercase tracking-tighter">
           Wiki <span className="text-red-600">Pilotes</span>
         </h1>
@@ -90,7 +88,6 @@ export const WikiPage = ({
         />
       </div>
 
-      {/* Légendes */}
       {query.length < 2 && (
         <section className="max-w-6xl mx-auto">
           <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-slate-500 mb-8 ml-1">
@@ -126,7 +123,6 @@ export const WikiPage = ({
         </section>
       )}
 
-      {/* Résultats */}
       {query.length >= 2 && (
         <section className="max-w-6xl mx-auto">
           <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-slate-500 mb-8 ml-1">
@@ -134,10 +130,10 @@ export const WikiPage = ({
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {results.map((item) => {
-              const stats =
-                item.driver_stats_view && item.driver_stats_view.length > 0
-                  ? item.driver_stats_view[0]
-                  : null;
+              // Sécurisation de l'accès aux stats (gère le tableau ou l'objet)
+              const rawStats = item.driver_stats_view;
+              const stats = Array.isArray(rawStats) ? rawStats[0] : rawStats;
+
               const championships = stats?.total_championships || 0;
               return (
                 <div
@@ -161,7 +157,7 @@ export const WikiPage = ({
                     </h3>
                     <p className="text-xs text-slate-500">
                       {stats
-                        ? `${stats.total_wins} Victoires • ${Math.round(stats.total_points)} Pts`
+                        ? `${stats.total_wins || 0} Victoires • ${Math.round(stats.total_points || 0)} Pts`
                         : "Aucune stat"}
                     </p>
                   </div>

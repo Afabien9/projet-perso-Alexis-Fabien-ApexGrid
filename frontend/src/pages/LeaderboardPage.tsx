@@ -92,7 +92,7 @@ export const LeaderboardPage: React.FC<LeaderboardPageProps> = ({ onBack }) => {
 
       {/* En-tête de page haut de gamme */}
       <header className="max-w-6xl mx-auto mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-slate-900 pb-6">
-        <div className="border-l-4 border-red-600 pl-5 space-y-1">
+        <div>
           <h1 className="text-4xl md:text-5xl font-black italic uppercase tracking-tighter">
             Classement{" "}
             <span className="text-red-600 drop-shadow-[0_0_10px_rgba(220,38,38,0.3)]">
