@@ -1,0 +1,41 @@
+# Récapitulatif Détaillé du Projet : ApexGrid
+
+## Description Générale
+ApexGrid est une plateforme interactive d'analyse de données Formule 1 (statistiques, classements, fantasy league).
+
+## Architecture Détaillée
+
+### 1. Backend (`/backend`)
+*   **Technologie** : Node.js, Express, TypeScript.
+*   **API** : Endpoints pour les résultats de course, classements (`/api/results`, `/api/calendar`), authentification, et gestion d'admin.
+*   **Logique Métier** :
+    *   `ScoringEngine.ts` : Moteur de calcul complexe des scores pour la fantasy league.
+    *   `authMiddleware.ts` : Protection des routes via JWT.
+    *   `controllers/` : Gestion des requêtes (classements cumulés, temps réel, sélecteurs de round).
+*   **Modèles** : Interfaces typées (Pilotes, Constructeurs, Résultats, Classements).
+
+### 2. Frontend (`/frontend`)
+*   **Technologie** : React, Vite, TypeScript, Tailwind CSS.
+*   **Gestion d'État** : Utilisation intensive de `useState` et `useEffect` pour gérer les données asynchrones (API), la recherche, et l'état des composants UI.
+*   **Composants Clés** :
+    *   `SearchBar.tsx` : Recherche de pilotes via Supabase.
+    *   `ScoreCard.tsx` : Affichage détaillé des scores fantasy.
+    *   `WikiSearch.tsx` : Recherche documentaire.
+    *   `GrandPrixSelector.tsx` : Interface de sélection de rounds (GP).
+*   **Pages** :
+    *   `Dashboard.tsx` : Hub central de navigation.
+    *   `DriverDetails.tsx` : Fiche détaillée d'un pilote (stats, carrière).
+    *   `HistoryPage.tsx` : Historique des scores, gestion des rounds, intégration API externe.
+    *   `AdminPanel.tsx` : Administration (sync de données, gestion utilisateurs).
+
+### 3. Données et Intégration
+*   **Stockage** : Fichiers CSV/JSON historiques (`/script/data/`).
+*   **Synchronisation** : Scripts de gestion des données (`/script/`, `/backend/scripts/`).
+*   **Base de Données** : Utilisation de Supabase comme backend de données (identifié dans `SearchBar.tsx`, `DriverDetails.tsx`).
+
+## Fonctionnalités Principales
+1.  **Suivi F1** : Accès aux statistiques pilotes et écuries.
+2.  **Fantasy League** : Moteur de scoring dynamique, leaderboard, gestion d'équipe utilisateur.
+3.  **Interface interactive** : Sélection de rounds basée sur la date, le circuit et le nom (selon le cahier des charges).
+4.  **Admin** : Synchronisation des données et gestion des privilèges utilisateurs.
+EOF
