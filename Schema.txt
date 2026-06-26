@@ -1,45 +1,85 @@
-F1_FANTASY_ANALYTICS/
-├── backend/                        # CŒUR LOGIQUE (Node.js + Express)
+APEXGRID/
+├── backend/
+│   ├── node_modules/
+│   ├── scripts/
+│   │   ├── ImportStats.ts
+│   │   ├── SyncManager.ts
+│   │   └── UpdateSuggestionsTable.ts
 │   ├── src/
-│   │   ├── config/                 # Clés API & Database
-│   │   ├── controllers/            # Routes & Logique métier
-│   │   ├── middleware/             # Sécurité & JWT
-│   │   ├── models/                 # Interfaces TS (User, Driver)
-│   │   ├── services/               # ScoringEngine.ts (Bonus & Duels)
-│   │   └── index.ts                # Point d'entrée serveur
-│   ├── .env                        # Secrets & Variables
-│   ├──tsconfig.json               # Config TypeScript Backend
-│   └──data
-│       │
-│       ├── drivers.json           // Liste complète des pilotes (Référentiel)
-│       ├── constructors.json      // Liste des écuries (Référentiel)
-│       ├── standings_elite.json   // Top 5 pour le malus
-│       ├── standings_bottom.json  // Fond de grille pour le bonus
-│       └── /results/              // Un fichier par course
-│           ├── 2026_1.json
-│           ├── 2026_2.json
-│           └── ...
-│
-├── frontend/                       # INTERFACE VISUELLE (React + Vite)
-│   ├── public/                     # Fichiers statiques (favicon, etc.)
+│   │   ├── config/
+│   │   │   └── ds.ts
+│   │   ├── controllers/
+│   │   │   ├── authController.ts
+│   │   │   └── resultsController.ts
+│   │   ├── middleware/
+│   │   │   └── authMiddleware.ts
+│   │   ├── models/
+│   │   │   ├── ConstrctorStanding.ts
+│   │   │   ├── DriverStanding.ts
+│   │   │   └── RaceResult.ts
+│   │   ├── root/
+│   │   │   ├── adminRoutes.ts
+│   │   │   ├── authRoutes.ts
+│   │   │   ├── calendarRoutes.ts
+│   │   │   ├── resultsRoutes.ts
+│   │   │   ├── scoresRoutes.ts
+│   │   │   ├── syncRoutes.ts
+│   │   │   └── userRoutes.ts
+│   │   ├── services/
+│   │   │   ├── ApiService.ts
+│   │   │   ├── ScoringEngine.ts
+│   │   │   └── seasonConfigService.ts
+│   │   └── index.ts
+│   ├── package-lock.json
+│   ├── package.json
+│   └── tsconfig.json
+├── frontend/
+│   ├── node_modules/
+│   ├── public/
+│   │   └── Track/
 │   ├── src/
-│   │   ├── assets/                 # Logos écuries & Styles CSS
+│   │   ├── assets/
+│   │   │   └── img/
 │   │   ├── components/
-│   │   │   ├── charts/             # Graphiques (Radar, Line)
-│   │   │   ├── fantasy/            # ScoreCard.tsx, DriverSelection
-│   │   │   └── ui/                 # Indicateurs (Flèches, Badges)
-│   │   ├── hooks/                  # Logique de récupération des scores
-│   │   ├── pages/                  # Dashboard.tsx, Market.tsx
-│   │   ├── services/               # Appels API (ApiService.ts)
-│   │   ├── types/                  # ScoreDetail.ts (PointDetail)
-│   │   ├── App.tsx                 # Composant racine (Layout & Routes)
-│   │   ├── main.tsx                # Lanceur (ReactDOM.render)
-│   │   └── index.css               # Directives Tailwind CSS
-│   ├── index.html                  # Point d'entrée navigateur
-│   ├── vite.config.ts              # Moteur de compilation
-│   ├── tsconfig.json               # Config TypeScript Frontend
-│   ├── tailwind.config.js          # Config design Tailwind
-│   └── .env                        # URL du Backend (http://localhost:3000)
-│
-└── shared/                         # PARTAGE (Interfaces communes)
-    └── Driver.ts                   # Types utilisés par le Back et le Front
+│   │   │   ├── fantasy/
+│   │   │   ├── wiki/
+│   │   │   └── SearchBar.tsx
+│   │   ├── constants/
+│   │   │   └── drivers.ts
+│   │   ├── pages/
+│   │   │   ├── AdminPanel.tsx
+│   │   │   ├── AuthPage.tsx
+│   │   │   ├── ContactPage.tsx
+│   │   │   ├── Dashboard.tsx
+│   │   │   ├── DriverDetails.tsx
+│   │   │   ├── DriversStatsPage.tsx
+│   │   │   ├── GrandPrixSelector.tsx
+│   │   │   ├── HistoryPage.tsx
+│   │   │   ├── LeaderboardPage.tsx
+│   │   │   ├── MyTeamPage.tsx
+│   │   │   ├── RaceResults.tsx
+│   │   │   └── WikiPage.tsx
+│   │   ├── services/
+│   │   │   ├── api.ts
+│   │   │   └── supabaseClient.ts
+│   │   ├── types/
+│   │   │   └── ScoreDetail.ts
+│   │   ├── index.css
+│   │   ├── main.tsx
+│   │   └── vite-env.d.ts
+│   ├── index.html
+│   ├── package-lock.json
+│   ├── package.json
+│   ├── postcss.config.cjs
+│   ├── tailwind.config.js
+│   ├── tsconfig.json
+│   ├── tsconfig.node.json
+│   └── vite.config.ts
+├── script/
+│   ├── data/
+│   ├── import.js
+│   └── updateStats.js
+├── .gitignore
+├── documentation utilisateur.txt
+├── Schema.txt
+└── technique.txt
