@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { authService } from "../services/api.js";
 
 interface LeaderboardEntry {
@@ -19,9 +20,12 @@ interface LeaderboardPageProps {
 }
 
 export const LeaderboardPage: React.FC<LeaderboardPageProps> = ({ onBack }) => {
+  const { round } = useParams();
+  const navigate = useNavigate();
+  const selectedRound = round || "season";
+
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [calendar, setCalendar] = useState<GrandPrixCalendar[]>([]);
-  const [selectedRound, setSelectedRound] = useState<string>("season"); // "season" ou numéro du round ("1", "2"...)
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -72,6 +76,11 @@ export const LeaderboardPage: React.FC<LeaderboardPageProps> = ({ onBack }) => {
     fetchLeaderboardData();
   }, [selectedRound]);
 
+  const handleRoundChange = (roundId: string) => {
+    if (roundId === "season") navigate("/leaderboard");
+    else navigate(`/leaderboard/${roundId}`);
+  };
+
   return (
     <div className="w-full min-h-screen bg-slate-950 text-white p-4 md:p-12 font-sans">
       <div className="max-w-6xl mx-auto mb-6">
@@ -97,7 +106,7 @@ export const LeaderboardPage: React.FC<LeaderboardPageProps> = ({ onBack }) => {
 
         <div className="flex items-center gap-3">
           <button
-            onClick={() => setSelectedRound("season")}
+            onClick={() => handleRoundChange("season")}
             className={`px-4 py-2 text-xs font-black uppercase tracking-wider rounded-lg border transition-all transform -skew-x-6 cursor-pointer ${
               selectedRound === "season"
                 ? "bg-red-600 border-red-500 text-white shadow-[0_0_15px_rgba(220,38,38,0.4)]"
@@ -111,7 +120,7 @@ export const LeaderboardPage: React.FC<LeaderboardPageProps> = ({ onBack }) => {
             <select
               value={selectedRound === "season" ? "" : selectedRound}
               onChange={(e) => {
-                if (e.target.value) setSelectedRound(e.target.value);
+                if (e.target.value) handleRoundChange(e.target.value);
               }}
               className="bg-slate-900 border border-slate-800 text-slate-300 px-4 py-2 rounded-lg text-xs font-mono uppercase tracking-wide focus:outline-none focus:border-red-600 transition-colors cursor-pointer appearance-none pr-8"
             >

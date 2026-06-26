@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import ReactDOM from "react-dom/client";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation, useParams } from "react-router-dom";
 import { io } from "socket.io-client";
 
 import AuthPage from "./pages/AuthPage";
@@ -18,24 +18,9 @@ import { ContactPage } from "./pages/ContactPage";
 import { authService } from "./services/api";
 import "./index.css";
 
-type ActiveView =
-  | "dashboard"
-  | "results"
-  | "calendar"
-  | "history"
-  | "leaderboard"
-  | "wiki"
-  | "contact"
-  | "admin";
-
 const MainLayout = () => {
-  const [currentView, setCurrentView] = useState<ActiveView>("dashboard");
-  const [isOpen, setIsOpen] = useState<boolean>(false);
-  const [selectedRound, setSelectedRound] = useState<string>("1");
-  const [activeTargetRound, setActiveTargetRound] = useState<
-    string | undefined
-  >(undefined);
-  const [selectedDriverId, setSelectedDriverId] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const [isOpen, setIsOpen] = React.useState<boolean>(false);
 
   useEffect(() => {
     const socket = io("http://localhost:3000");
@@ -52,199 +37,73 @@ const MainLayout = () => {
     if (!token) return null;
     try {
       const base64Url = token.split(".")[1];
-      const payload = JSON.parse(
-        window.atob(base64Url.replace(/-/g, "+").replace(/_/g, "/")),
-      );
+      const payload = JSON.parse(window.atob(base64Url.replace(/-/g, "+").replace(/_/g, "/")));
       return payload.role;
-    } catch {
-      return null;
-    }
+    } catch { return null; }
   };
 
   const userRole = getUserRole();
+  const handleLogout = () => { authService.logout(); window.location.href = "/"; };
 
-  const handleLogout = () => {
-    authService.logout();
-    window.location.reload();
-  };
+  const NavButton = ({ to, label, emoji }: { to: string; label: string; emoji: string }) => (
+    <button onClick={() => { navigate(to); setIsOpen(false); }} className="w-full text-left font-bold uppercase text-xs p-3 rounded-lg border border-slate-800 hover:bg-slate-800">
+      {emoji} {label}
+    </button>
+  );
 
   return (
     <div className="bg-slate-950 min-h-screen text-white font-sans relative overflow-hidden">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="fixed top-5 left-5 z-50 p-3 bg-slate-900 border border-slate-800 rounded-lg hover:border-red-600 transition-all"
-      >
+      <button onClick={() => setIsOpen(!isOpen)} className="fixed top-5 left-5 z-50 p-3 bg-slate-900 border border-slate-800 rounded-lg hover:border-red-600 transition-all">
         <div className="w-6 h-5 flex flex-col justify-between items-center">
-          <span
-            className={`h-0.5 w-6 bg-white transition-all ${isOpen ? "rotate-45 translate-y-2 bg-red-600" : ""}`}
-          />
-          <span
-            className={`h-0.5 w-6 bg-white transition-all ${isOpen ? "opacity-0" : ""}`}
-          />
-          <span
-            className={`h-0.5 w-6 bg-white transition-all ${isOpen ? "-rotate-45 -translate-y-2 bg-red-600" : ""}`}
-          />
+          <span className={`h-0.5 w-6 bg-white transition-all ${isOpen ? "rotate-45 translate-y-2 bg-red-600" : ""}`} />
+          <span className={`h-0.5 w-6 bg-white transition-all ${isOpen ? "opacity-0" : ""}`} />
+          <span className={`h-0.5 w-6 bg-white transition-all ${isOpen ? "-rotate-45 -translate-y-2 bg-red-600" : ""}`} />
         </div>
       </button>
 
-      <div
-        className={`fixed top-0 left-0 h-full w-72 bg-slate-900/95 border-r border-slate-800 z-40 pt-24 px-6 transition-transform ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
-      >
+      <div className={`fixed top-0 left-0 h-full w-72 bg-slate-900/95 border-r border-slate-800 z-40 pt-24 px-6 transition-transform ${isOpen ? "translate-x-0" : "-translate-x-full"}`}>
         <nav className="flex flex-col gap-3">
-          <button
-            onClick={() => {
-              setCurrentView("dashboard");
-              setIsOpen(false);
-            }}
-            className="w-full text-left font-bold uppercase text-xs p-3 rounded-lg border border-slate-800 hover:bg-slate-800"
-          >
-            🏠 Accueil
-          </button>
-          <button
-            onClick={() => {
-              setCurrentView("wiki");
-              setSelectedDriverId(null);
-              setIsOpen(false);
-            }}
-            className="w-full text-left font-bold uppercase text-xs p-3 rounded-lg border border-slate-800 hover:bg-slate-800"
-          >
-            📚 Wiki F1
-          </button>
-          <button
-            onClick={() => {
-              setCurrentView("calendar");
-              setIsOpen(false);
-            }}
-            className="w-full text-left font-bold uppercase text-xs p-3 rounded-lg border border-slate-800 hover:bg-slate-800"
-          >
-            📅 Calendrier
-          </button>
-          <button
-            onClick={() => {
-              setCurrentView("history");
-              setIsOpen(false);
-            }}
-            className="w-full text-left font-bold uppercase text-xs p-3 rounded-lg border border-slate-800 hover:bg-slate-800"
-          >
-            📜 Fantasy League
-          </button>
-          <button
-            onClick={() => {
-              setCurrentView("leaderboard");
-              setIsOpen(false);
-            }}
-            className="w-full text-left font-bold uppercase text-xs p-3 rounded-lg border border-slate-800 hover:bg-slate-800"
-          >
-            🏆 Classement
-          </button>
-          <button
-            onClick={() => {
-              setCurrentView("contact");
-              setIsOpen(false);
-            }}
-            className="w-full text-left font-bold uppercase text-xs p-3 rounded-lg border border-slate-800 hover:bg-slate-800"
-          >
-            📩 Contact
-          </button>
-
-          {userRole === "admin" && (
-            <button
-              onClick={() => {
-                setCurrentView("admin");
-                setIsOpen(false);
-              }}
-              className="w-full text-left font-bold text-xs p-3 rounded-lg border border-amber-900 text-amber-500 hover:bg-amber-900/20"
-            >
-              ⚙️ Admin
-            </button>
-          )}
-
-          <button
-            onClick={handleLogout}
-            className="mt-10 w-full text-left font-bold text-xs p-3 text-red-500 border rounded-lg border-red-900/40 hover:bg-red-950/20"
-          >
-            🚪 Déconnexion
-          </button>
+          <NavButton to="/dashboard" label="Accueil" emoji="🏠" />
+          <NavButton to="/wiki" label="Wiki F1" emoji="📚" />
+          <NavButton to="/calendar" label="Calendrier" emoji="📅" />
+          <NavButton to="/history" label="Fantasy League" emoji="📜" />
+          <NavButton to="/leaderboard" label="Classement" emoji="🏆" />
+          <NavButton to="/contact" label="Contact" emoji="📩" />
+          {userRole === "admin" && <NavButton to="/admin" label="Admin" emoji="⚙️" />}
+          <button onClick={handleLogout} className="mt-10 w-full text-left font-bold text-xs p-3 text-red-500 border rounded-lg border-red-900/40 hover:bg-red-950/20">🚪 Déconnexion</button>
         </nav>
       </div>
 
       <div className="w-full pt-12">
-        {currentView === "dashboard" && (
-          <Dashboard onNavigate={(v) => setCurrentView(v)} />
-        )}
-
-        {currentView === "calendar" && (
-          <GrandPrixSelector
-            onSelectRound={(r) => {
-              setSelectedRound(r);
-              setCurrentView("results");
-            }}
-            onBack={() => setCurrentView("dashboard")}
-          />
-        )}
-
-        {currentView === "results" && (
-          <RaceResults
-            initialRound={selectedRound}
-            onBack={() => setCurrentView("calendar")}
-          />
-        )}
-
-        {currentView === "history" && (
-          <HistoryPage
-            onNavigateToTeam={(round) => {
-              setActiveTargetRound(round);
-              // @ts-ignore
-              setCurrentView("team");
-            }}
-            onBack={() => setCurrentView("dashboard")}
-          />
-        )}
-
-        {
-          // @ts-ignore
-          currentView === "team" && (
-            <MyTeamPage
-              targetRound={activeTargetRound}
-              onBack={() => setCurrentView("history")}
-            />
-          )
-        }
-
-        {currentView === "wiki" && selectedDriverId === null && (
-          <WikiPage onSelectDriver={setSelectedDriverId} />
-        )}
-        {currentView === "wiki" && selectedDriverId !== null && (
-          <DriverDetails
-            driverId={selectedDriverId}
-            onBack={() => setSelectedDriverId(null)}
-          />
-        )}
-
-        {currentView === "leaderboard" && (
-          <LeaderboardPage onBack={() => setCurrentView("dashboard")} />
-        )}
-        {currentView === "contact" && (
-          <ContactPage onBack={() => setCurrentView("dashboard")} />
-        )}
-
-        {currentView === "admin" && <AdminPanel />}
+        <Routes>
+          <Route path="/" element={<Navigate to="/dashboard" />} />
+          <Route path="/dashboard" element={<Dashboard onNavigate={(v) => navigate(`/${v}`)} />} />
+          <Route path="/calendar" element={<GrandPrixSelector onSelectRound={(r) => navigate(`/results/${r}`)} onBack={() => navigate("/dashboard")} />} />
+          <Route path="/results/:round" element={<RaceResultsWrapper />} />
+          <Route path="/history" element={<HistoryPage onNavigateToTeam={(r) => navigate(`/team/${r}`)} onBack={() => navigate("/dashboard")} />} />
+          <Route path="/team/:round" element={<MyTeamPageWrapper />} />
+          <Route path="/wiki" element={<WikiPage onSelectDriver={(id) => navigate(`/wiki/${id}`)} />} />
+          <Route path="/wiki/:driverId" element={<DriverDetailsWrapper />} />
+          <Route path="/leaderboard" element={<LeaderboardPage onBack={() => navigate("/dashboard")} />} />
+          <Route path="/leaderboard/:round" element={<LeaderboardPageWrapper />} />
+          <Route path="/contact" element={<ContactPage onBack={() => navigate("/dashboard")} />} />
+          <Route path="/admin" element={<AdminPanel />} />
+        </Routes>
       </div>
     </div>
   );
 };
 
+const RaceResultsWrapper = () => { const { round } = useParams(); const navigate = useNavigate(); return <RaceResults initialRound={round!} onBack={() => navigate("/calendar")} />; };
+const MyTeamPageWrapper = () => { const { round } = useParams(); const navigate = useNavigate(); return <MyTeamPage targetRound={round} onBack={() => navigate("/history")} />; };
+const DriverDetailsWrapper = () => { const { driverId } = useParams(); const navigate = useNavigate(); return <DriverDetails driverId={driverId!} onBack={() => navigate("/wiki")} />; };
+const LeaderboardPageWrapper = () => { const { round } = useParams(); const navigate = useNavigate(); return <LeaderboardPage onBack={() => navigate("/leaderboard")} />; };
+
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <BrowserRouter>
       <Routes>
-        <Route
-          path="/"
-          element={
-            localStorage.getItem("apex_token") ? <MainLayout /> : <AuthPage />
-          }
-        />
-        <Route path="*" element={<Navigate to="/" />} />
+        <Route path="/*" element={localStorage.getItem("apex_token") ? <MainLayout /> : <AuthPage />} />
       </Routes>
     </BrowserRouter>
   </React.StrictMode>,
