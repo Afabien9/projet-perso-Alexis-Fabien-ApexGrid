@@ -28,19 +28,18 @@ export const register = async (req: any, res: any) => {
   }
 };
 
-// connecter utilisateur verifier identifiants generer jeton jwt
-  export const login = async (req: any, res: any) => {
-    const { email, password } = req.body;
-    const user = (
-      await db.query("SELECT * FROM users WHERE email = $1", [email])
-    ).rows[0];
+// Vérifier l'identifiant au moment de la connexion
+export const login = async (req: any, res: any) => {
+  const { email, password } = req.body;
+  const user = (await db.query("SELECT * FROM users WHERE email = $1", [email]))
+    .rows[0];
 
-    if (user && (await bcrypt.compare(password, user.password_hash))) {
-      const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, {
-        expiresIn: "24h",
-      });
-      res.json({ token, username: user.username, role: user.role });
-    } else {
-      res.status(401).json({ message: "Identifiants incorrects" });
-    }
-  };
+  if (user && (await bcrypt.compare(password, user.password_hash))) {
+    const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, {
+      expiresIn: "24h",
+    });
+    res.json({ token, username: user.username, role: user.role });
+  } else {
+    res.status(401).json({ message: "Identifiants incorrects" });
+  }
+};

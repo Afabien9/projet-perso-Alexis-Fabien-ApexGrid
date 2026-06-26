@@ -1,6 +1,3 @@
-
-
-// frontend/src/pages/ContactPage.tsx
 import React, { useState } from "react";
 
 export const ContactPage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
@@ -37,9 +34,16 @@ export const ContactPage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       <h1 className="text-4xl font-black uppercase italic mb-8 border-b border-slate-800 pb-4">
         Nous Contacter
       </h1>
-      <button onClick={onBack} className="text-slate-400 hover:text-white mb-4">← Retour</button>
-      <form onSubmit={handleSubmit} className="bg-slate-900 p-6 rounded-xl border border-slate-800">
-        <label className="block mb-2 text-sm font-bold">Votre suggestion :</label>
+      <button onClick={onBack} className="text-slate-400 hover:text-white mb-4">
+        ← Retour
+      </button>
+      <form
+        onSubmit={handleSubmit}
+        className="bg-slate-900 p-6 rounded-xl border border-slate-800"
+      >
+        <label className="block mb-2 text-sm font-bold">
+          Votre suggestion :
+        </label>
         <textarea
           value={message}
           onChange={(e) => setMessage(e.target.value)}

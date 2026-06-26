@@ -71,10 +71,8 @@ export const getBottomTeams = async (): Promise<string[]> => {
     const list =
       data.MRData.StandingsTable.StandingsLists[0]?.ConstructorStandings;
 
-    
     if (!list) return [];
 
-    
     const bottomThree = list
       .slice(-3)
       .map((item) => item.Constructor.constructorId);

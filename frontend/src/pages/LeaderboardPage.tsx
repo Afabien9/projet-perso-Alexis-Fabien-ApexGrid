@@ -1,5 +1,3 @@
-// frontend/src/pages/LeaderboardPage.tsx
-
 import React, { useEffect, useState } from "react";
 import { authService } from "../services/api.js";
 
@@ -27,7 +25,7 @@ export const LeaderboardPage: React.FC<LeaderboardPageProps> = ({ onBack }) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // 1. Chargement initial du calendrier pour alimenter le menu déroulant
+  // Chargement initial du calendrier
   useEffect(() => {
     const fetchCalendar = async () => {
       try {
@@ -43,7 +41,7 @@ export const LeaderboardPage: React.FC<LeaderboardPageProps> = ({ onBack }) => {
     fetchCalendar();
   }, []);
 
-  // 2. Récupération des données du classement dès que le filtre change
+  // Récupération des données du classement
   useEffect(() => {
     const fetchLeaderboardData = async () => {
       setLoading(true);
@@ -53,10 +51,8 @@ export const LeaderboardPage: React.FC<LeaderboardPageProps> = ({ onBack }) => {
         let data: LeaderboardEntry[] = [];
 
         if (selectedRound === "season") {
-          // Appel de l'endpoint global (Cumul saison)
           data = await authService.getSeasonLeaderboard();
         } else {
-          // Appel de l'endpoint spécifique filtré par round
           data = await authService.getRoundLeaderboard(selectedRound);
         }
 
@@ -78,7 +74,6 @@ export const LeaderboardPage: React.FC<LeaderboardPageProps> = ({ onBack }) => {
 
   return (
     <div className="w-full min-h-screen bg-slate-950 text-white p-4 md:p-12 font-sans">
-      {/* RETOUR TECHNIQUE STYLE PADDOCK */}
       <div className="max-w-6xl mx-auto mb-6">
         <button
           onClick={onBack}
@@ -90,7 +85,6 @@ export const LeaderboardPage: React.FC<LeaderboardPageProps> = ({ onBack }) => {
         </button>
       </div>
 
-      {/* En-tête de page haut de gamme */}
       <header className="max-w-6xl mx-auto mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-slate-900 pb-6">
         <div>
           <h1 className="text-4xl md:text-5xl font-black italic uppercase tracking-tighter">
@@ -101,7 +95,6 @@ export const LeaderboardPage: React.FC<LeaderboardPageProps> = ({ onBack }) => {
           </h1>
         </div>
 
-        {/* Boutons d'activation rapides */}
         <div className="flex items-center gap-3">
           <button
             onClick={() => setSelectedRound("season")}
@@ -114,7 +107,6 @@ export const LeaderboardPage: React.FC<LeaderboardPageProps> = ({ onBack }) => {
             🏆 Toute la saison
           </button>
 
-          {/* Menu déroulant sélecteur de Grand Prix */}
           <div className="relative">
             <select
               value={selectedRound === "season" ? "" : selectedRound}
@@ -139,17 +131,14 @@ export const LeaderboardPage: React.FC<LeaderboardPageProps> = ({ onBack }) => {
         </div>
       </header>
 
-      {/* Zone de notification d'erreur */}
       {error && (
         <div className="max-w-6xl mx-auto mb-6 p-4 bg-red-950/20 border border-red-900/40 rounded-xl text-center text-red-400 font-mono text-xs shadow-[0_0_20px_rgba(220,38,38,0.1)]">
           ⚠️ {error}
         </div>
       )}
 
-      {/* Corps Principal : Tableau de classement technique */}
       <main className="max-w-6xl mx-auto bg-slate-900/20 border border-slate-900 rounded-2xl overflow-hidden backdrop-blur-sm shadow-2xl">
         {loading ? (
-          /* Loader de télémétrie asynchrone */
           <div className="py-32 flex flex-col items-center justify-center">
             <div className="w-10 h-10 border-4 border-red-600 border-t-transparent rounded-full animate-spin mb-3" />
             <p className="text-xs font-mono uppercase tracking-widest text-slate-500 italic animate-pulse">

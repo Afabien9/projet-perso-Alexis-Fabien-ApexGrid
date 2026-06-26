@@ -36,20 +36,19 @@ export function MyTeamPage({ targetRound, onBack }: MyTeamPageProps) {
     setLoading(true);
     setSaveSuccess(false);
 
-    // 1. Chargement conjoint du Line-up utilisateur et du calendrier depuis l'API
+    // 1. Chargement de la Line-up utilisateur et du calendrier
     Promise.all([
       authService.getMyTeam(currentRound),
       fetch("http://localhost:3000/api/calendar").then((res) => res.json()),
     ])
       .then(([teamData, calendarData]: [any, GrandPrixInfo[]]) => {
-        // Hydratation de l'équipe depuis le tableau natif _text
         if (teamData && teamData.driver_ids) {
           setMyTeam(teamData.driver_ids);
         } else {
           setMyTeam([]);
         }
 
-        // Recherche dynamique du nom du Grand Prix dans le calendrier de la BDD
+        // Recherche du nom du Grand Prix dans le calendrier de la BDD
         const currentRace = calendarData.find(
           (gp) => gp.round === currentRound,
         );
@@ -103,11 +102,8 @@ export function MyTeamPage({ targetRound, onBack }: MyTeamPageProps) {
     setSaveSuccess(false);
 
     try {
-      // Normalisation de sécurité de la casse de chaque identifiant pilote (minuscules)
-      // pour garantir l'équivalence parfaite avec les contraintes textuelles SQL
       const normalizedLineUp = myTeam.map((id) => id.toLowerCase());
 
-      // Transmission directe du tableau brut [] à ton service authService.saveTeam()
       await authService.saveTeam(normalizedLineUp, currentRound);
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
@@ -135,15 +131,12 @@ export function MyTeamPage({ targetRound, onBack }: MyTeamPageProps) {
 
   return (
     <div className="min-h-screen bg-slate-950 text-white p-4 md:p-10 font-sans relative">
-      {/* RETOUR TECHNIQUE */}
       <div className="max-w-6xl mx-auto mb-6">
         <button
           onClick={onBack}
           className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest px-4 py-2.5 rounded bg-slate-900 border border-slate-800 text-slate-400 hover:border-red-600 hover:text-white transition-all cursor-pointer group skew-x-[-10deg]"
         >
-          <span className="inline-block transform skew-x-10">
-            ← RETOUR
-          </span>
+          <span className="inline-block transform skew-x-10">← RETOUR</span>
         </button>
       </div>
 
@@ -151,20 +144,16 @@ export function MyTeamPage({ targetRound, onBack }: MyTeamPageProps) {
         <div>
           <h1 className="text-4xl md:text-6xl font-black italic uppercase tracking-tighter leading-none">
             ApexGrid{" "}
-            
           </h1>
         </div>
         <div className="flex items-center">
           <span className="bg-linear-to-r from-emerald-600 to-emerald-500 border border-emerald-400 text-slate-950 text-[10px] font-mono font-black px-4 py-2 rounded uppercase tracking-widest skew-x-[-10deg] shadow-[0_0_15px_rgba(16,185,129,0.2)]">
-            <span className="inline-block transform skew-x-10">
-              {raceName}
-            </span>
+            <span className="inline-block transform skew-x-10">{raceName}</span>
           </span>
         </div>
       </header>
 
       <main className="max-w-6xl mx-auto space-y-8">
-        {/* COMPTE-TOURS EN COMPOSANT DE BUDGET */}
         <div className="bg-linear-to-br from-slate-900 to-slate-900/60 p-6 rounded-xl border border-slate-800 shadow-[0_10px_30px_rgba(0,0,0,0.5)] flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-red-600" />
 
@@ -194,7 +183,6 @@ export function MyTeamPage({ targetRound, onBack }: MyTeamPageProps) {
               </div>
             </div>
 
-            {/* Jauge Compte-tours unie sans dégradé */}
             <div className="h-3 bg-slate-950 border border-slate-800 rounded-md overflow-hidden p-0.5">
               <div
                 className="h-full rounded bg-emerald-500 shadow-inner transition-all duration-500"
@@ -226,7 +214,6 @@ export function MyTeamPage({ targetRound, onBack }: MyTeamPageProps) {
           </div>
         </div>
 
-        {/* MARCHÉ DES PILOTES ASYMÉTRIQUE */}
         <section>
           <div className="border-b border-slate-900 pb-3 mb-6 flex justify-between items-center">
             <h2 className="text-xs font-mono font-black uppercase tracking-widest text-slate-500">
@@ -250,12 +237,10 @@ export function MyTeamPage({ targetRound, onBack }: MyTeamPageProps) {
                       : "border-slate-800/80 bg-slate-900/40 hover:border-slate-600 hover:bg-slate-900/80"
                   }`}
                 >
-                  {/* Badge prix intégré */}
                   <div className="absolute top-1 left-1 z-10 bg-slate-950/80 backdrop-blur-md px-1.5 py-0.5 rounded border border-slate-800/60 text-[8px] font-mono font-black text-slate-400 group-hover:text-white transition-colors">
                     {driver.price}M
                   </div>
 
-                  {/* Photo pilote asymétrique */}
                   <div className="aspect-4/5 w-full overflow-hidden rounded-lg mb-2 relative bg-slate-950 border border-slate-800/40">
                     <div className="absolute inset-0 bg-linear-to-t from-slate-950 via-transparent to-transparent opacity-80 z-1" />
                     <img
@@ -269,7 +254,6 @@ export function MyTeamPage({ targetRound, onBack }: MyTeamPageProps) {
                     />
                   </div>
 
-                  {/* Identification textuelle */}
                   <div className="flex flex-col items-center text-center w-full relative z-10">
                     <span
                       className={`text-[10px] font-black uppercase tracking-wide leading-none truncate w-full ${

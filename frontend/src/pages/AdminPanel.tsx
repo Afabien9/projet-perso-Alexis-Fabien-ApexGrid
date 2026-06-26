@@ -1,4 +1,3 @@
-// frontend/src/pages/AdminPanel.tsx
 import React, { useState, useEffect } from "react";
 
 export const AdminPanel = () => {
@@ -77,7 +76,10 @@ export const AdminPanel = () => {
     }
   };
 
-  const updateSuggestionStatus = async (id: string, status: "validated" | "refused") => {
+  const updateSuggestionStatus = async (
+    id: string,
+    status: "validated" | "refused",
+  ) => {
     try {
       const res = await fetch(`http://localhost:3000/admin/suggestions/${id}`, {
         method: "PATCH",
@@ -188,7 +190,7 @@ export const AdminPanel = () => {
                       <option value="user">User</option>
                       <option value="admin">Admin</option>
                     </select>
-                    <button 
+                    <button
                       onClick={() => deleteUser(u.id)}
                       className="bg-red-900 text-red-300 px-2 py-1 rounded text-xs uppercase font-bold hover:bg-red-800"
                     >
@@ -204,7 +206,9 @@ export const AdminPanel = () => {
 
       {activeTab === "suggestions" && (
         <div className="bg-slate-900 p-6 rounded-xl border border-slate-800">
-          <h2 className="text-xl font-bold mb-4">Suggestions des Utilisateurs</h2>
+          <h2 className="text-xl font-bold mb-4">
+            Suggestions des Utilisateurs
+          </h2>
           <table className="w-full text-left">
             <thead>
               <tr className="text-slate-500 text-xs uppercase border-b border-slate-800">
@@ -220,24 +224,35 @@ export const AdminPanel = () => {
                 <tr key={s.id} className="border-b border-slate-800">
                   <td className="p-2 font-bold">{s.username}</td>
                   <td className="p-2 text-slate-300">{s.message}</td>
-                  <td className="p-2 text-slate-500">{new Date(s.created_at).toLocaleDateString()}</td>
-                  <td className={`p-2 font-bold ${
-                    s.status === 'validated' ? 'text-emerald-500' :
-                    s.status === 'refused' ? 'text-red-500' : 'text-amber-500'
-                  }`}>
+                  <td className="p-2 text-slate-500">
+                    {new Date(s.created_at).toLocaleDateString()}
+                  </td>
+                  <td
+                    className={`p-2 font-bold ${
+                      s.status === "validated"
+                        ? "text-emerald-500"
+                        : s.status === "refused"
+                          ? "text-red-500"
+                          : "text-amber-500"
+                    }`}
+                  >
                     {s.status.toUpperCase()}
                   </td>
                   <td className="p-2 flex gap-2">
-                    {s.status === 'pending' && (
+                    {s.status === "pending" && (
                       <>
-                        <button 
-                          onClick={() => updateSuggestionStatus(s.id, 'validated')}
+                        <button
+                          onClick={() =>
+                            updateSuggestionStatus(s.id, "validated")
+                          }
                           className="bg-emerald-900 text-emerald-300 px-2 py-1 rounded text-xs uppercase font-bold hover:bg-emerald-800"
                         >
                           Valider
                         </button>
-                        <button 
-                          onClick={() => updateSuggestionStatus(s.id, 'refused')}
+                        <button
+                          onClick={() =>
+                            updateSuggestionStatus(s.id, "refused")
+                          }
                           className="bg-red-900 text-red-300 px-2 py-1 rounded text-xs uppercase font-bold hover:bg-red-800"
                         >
                           Refuser

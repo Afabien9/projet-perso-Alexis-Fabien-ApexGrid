@@ -6,4 +6,3 @@ export interface RaceResult {
   status: string;
   isPoints: boolean;
 }
-

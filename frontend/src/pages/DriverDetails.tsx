@@ -22,7 +22,7 @@ export const DriverDetails = ({
 
   useEffect(() => {
     const fetchDriverDetails = async () => {
-      // 1. Profil pilote
+      // Profil pilote
       console.log("Tentative chargement profil pour ID:", driverId);
       const { data: driver, error: driverError } = await supabase
         .from("drivers_wiki")
@@ -31,7 +31,7 @@ export const DriverDetails = ({
         .single();
       if (driverError) console.error("Erreur profil:", driverError);
 
-      // 2. Stats
+      // Stats
       console.log("Tentative chargement stats pour ID:", driverId);
       const { data: stats, error: statsError } = await supabase
         .from("driver_stats_view")
@@ -42,7 +42,7 @@ export const DriverDetails = ({
         .maybeSingle();
       if (statsError) console.error("Erreur stats:", statsError);
 
-      // 3. Carrière
+      // Carrière
       console.log("Tentative chargement carrière pour ID:", driverId);
       const { data: career, error: careerError } = await supabase
         .from("driver_career_details")
@@ -87,7 +87,7 @@ export const DriverDetails = ({
         {driver.nationality}
       </p>
 
-      {/* Statistiques principales - Grid 5 colonnes */}
+      {/* Statistiques principales */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-10">
         <StatCard
           label="Victoires"

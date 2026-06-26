@@ -1,5 +1,3 @@
-// frontend/src/components/fantasy/RaceResults.tsx
-
 import React, { useEffect, useState } from "react";
 
 interface DriverResult {
@@ -64,9 +62,9 @@ export const RaceResults: React.FC<RaceResultsProps> = ({
 
         const sortedData = [...data].sort((a, b) => {
           if (sortBy === "points") {
-            return b.points - a.points; 
+            return b.points - a.points;
           } else {
-            return Number(a.position) - Number(b.position); 
+            return Number(a.position) - Number(b.position);
           }
         });
 
@@ -86,15 +84,15 @@ export const RaceResults: React.FC<RaceResultsProps> = ({
 
   return (
     <div className="w-full bg-slate-950 text-white p-4 md:p-10 font-sans">
-      
-      {/* SECTEUR DE TRI & BOUTON RETOUR CONTROLEUR */}
       <section className="mb-10 max-w-5xl mx-auto flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center bg-slate-900/30 p-4 rounded-xl border border-slate-800/80 backdrop-blur-sm">
         {onBack && (
           <button
             onClick={onBack}
             className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest px-4 py-2.5 rounded bg-slate-950 border border-slate-800 text-slate-400 hover:border-red-600 hover:text-white transition-all cursor-pointer skew-x-[-10deg]"
           >
-            <span className="inline-block transform skew-x-10">← LEADERBOARD</span>
+            <span className="inline-block transform skew-x-10">
+              ← LEADERBOARD
+            </span>
           </button>
         )}
 
@@ -108,7 +106,9 @@ export const RaceResults: React.FC<RaceResultsProps> = ({
                   : "text-slate-500 hover:text-slate-300"
               }`}
             >
-              <span className="inline-block transform skew-x-6">Position Course</span>
+              <span className="inline-block transform skew-x-6">
+                Position Course
+              </span>
             </button>
             <button
               onClick={() => setSortBy("points")}
@@ -118,19 +118,22 @@ export const RaceResults: React.FC<RaceResultsProps> = ({
                   : "text-slate-500 hover:text-slate-300"
               }`}
             >
-              <span className="inline-block transform skew-x-6">Points Marqués</span>
+              <span className="inline-block transform skew-x-6">
+                Points Marqués
+              </span>
             </button>
           </div>
         </div>
       </section>
 
-      {/* CLASSEMENT GÉNÉRAL TYPE STRATÉGIE DE COURSE */}
+      {/* CLASSEMENT GÉNÉRAL DE COURSE */}
       <main className="max-w-5xl mx-auto">
         <header className="mb-8">
           <h2 className="text-3xl md:text-5xl font-black italic uppercase tracking-tighter leading-none">
-           <span className="text-slate-300 drop-shadow-[0_0_10px_rgba(220,38,38,0.3)]">{currentRaceName}</span>
+            <span className="text-slate-300 drop-shadow-[0_0_10px_rgba(220,38,38,0.3)]">
+              {currentRaceName}
+            </span>
           </h2>
-          
         </header>
 
         {loading ? (
@@ -142,7 +145,9 @@ export const RaceResults: React.FC<RaceResultsProps> = ({
           </div>
         ) : error ? (
           <div className="p-16 bg-slate-900/20 border-2 border-dashed border-slate-800 rounded-xl text-center">
-            <p className="text-red-500 font-bold uppercase tracking-widest text-sm mb-1.5">Aucune donnée disponible</p>
+            <p className="text-red-500 font-bold uppercase tracking-widest text-sm mb-1.5">
+              Aucune donnée disponible
+            </p>
             <p className="text-slate-500 text-xs font-mono">{error}</p>
           </div>
         ) : (
@@ -172,23 +177,22 @@ export const RaceResults: React.FC<RaceResultsProps> = ({
                       key={driver.driverId}
                       className="hover:bg-slate-900/40 transition-colors duration-150 group relative"
                     >
-                      {/* Position Course massive et italique */}
                       <td className="p-2 md:p-4 text-center font-black italic text-lg md:text-xl text-white group-hover:text-red-500 transition-colors">
                         {driver.position}
                       </td>
-                      {/* Nom du pilote */}
+
                       <td className="p-2 md:p-4 font-black text-white tracking-wide uppercase text-[10px] md:text-sm">
                         {driver.driverId.replace("_", " ")}
                       </td>
-                      {/* Constructeur */}
+
                       <td className="p-2 md:p-4 text-slate-400 uppercase text-[9px] md:text-xs tracking-wider font-semibold">
                         {driver.constructorId}
                       </td>
-                      {/* Position de départ */}
+
                       <td className="p-2 md:p-4 text-center text-slate-500 font-mono font-black text-[10px] md:text-xs">
                         P{driver.grid}
                       </td>
-                      {/* Points avec background distinct */}
+
                       <td
                         className={`p-2 md:p-4 text-center font-mono font-black border-l border-slate-900/40 transition-all ${
                           sortBy === "points"
@@ -196,7 +200,9 @@ export const RaceResults: React.FC<RaceResultsProps> = ({
                             : "bg-red-600/2 text-red-500 text-xs md:text-sm"
                         }`}
                       >
-                        {driver.points > 0 ? `+${driver.points}` : driver.points}
+                        {driver.points > 0
+                          ? `+${driver.points}`
+                          : driver.points}
                       </td>
                     </tr>
                   ))}

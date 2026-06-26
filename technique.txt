@@ -58,6 +58,10 @@ e. Notification : Émet un événement Socket.io (`sync-completed`) via webhook 
 - JWT : Utilisé pour maintenir la session et valider les permissions dans les routes protégées via le middleware `authMiddleware.ts`.
 - CORS : Configuration pour permettre les requêtes venant du frontend.
 
---------------------------------------------------------
-Dernière mise à jour : Juin 2026
-========================================================
+6. LANCEMENT DU PROJET
+----------------------
+cd backend 
+npm run dev
+
+cd frontend 
+npm run dev

@@ -8,8 +8,12 @@ interface Driver {
   driver_stats_view: { total_championships: number }[];
 }
 
-// recherche pilotes suggestion temps réel base données
-export const SearchBar = ({ onSelectDriver }: { onSelectDriver: (id: string) => void }) => {
+// recherche pilotes suggestion temps réel
+export const SearchBar = ({
+  onSelectDriver,
+}: {
+  onSelectDriver: (id: string) => void;
+}) => {
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState<Driver[]>([]);
 
@@ -23,7 +27,9 @@ export const SearchBar = ({ onSelectDriver }: { onSelectDriver: (id: string) => 
 
     const { data, error } = await supabase
       .from("drivers_wiki")
-      .select("driver_id, forename, surname, driver_stats_view(total_championships)")
+      .select(
+        "driver_id, forename, surname, driver_stats_view(total_championships)",
+      )
       .or(`surname.ilike.${value}%,forename.ilike.${value}%`)
       .limit(5);
 
@@ -41,11 +47,12 @@ export const SearchBar = ({ onSelectDriver }: { onSelectDriver: (id: string) => 
         placeholder="Rechercher un pilote (ex: Ham...)"
         className="w-full bg-slate-900 border border-slate-700 text-white p-4 rounded-xl focus:outline-none focus:border-red-600 transition-colors"
       />
-      
+
       {suggestions.length > 0 && (
         <ul className="absolute z-50 w-full mt-2 bg-slate-800 border border-slate-700 rounded-xl overflow-hidden shadow-2xl">
           {suggestions.map((driver) => {
-            const championships = driver.driver_stats_view?.[0]?.total_championships || 0;
+            const championships =
+              driver.driver_stats_view?.[0]?.total_championships || 0;
             return (
               <li
                 key={driver.driver_id}
@@ -57,7 +64,8 @@ export const SearchBar = ({ onSelectDriver }: { onSelectDriver: (id: string) => 
                 className="p-4 hover:bg-red-600 cursor-pointer text-white border-b border-slate-700 last:border-0 transition-colors flex justify-between items-center"
               >
                 <span>
-                  <span className="font-bold">{driver.surname}</span> {driver.forename}
+                  <span className="font-bold">{driver.surname}</span>{" "}
+                  {driver.forename}
                 </span>
                 {championships > 0 && (
                   <span className="text-[10px] bg-red-900 text-white px-2 py-0.5 rounded-full font-black">

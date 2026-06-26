@@ -6,12 +6,12 @@ const getAuthHeaders = () => {
   const token = localStorage.getItem("apex_token");
   return {
     "Content-Type": "application/json",
-    ...(token ? { "Authorization": `Bearer ${token}` } : {}),
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
 };
 
 export const authService = {
-  // --- AUTHENTIFICATION ---
+  // Authetification
   register: async (username: string, email: string, password: string) => {
     const res = await fetch(`${API_URL}/register`, {
       method: "POST",
@@ -40,9 +40,8 @@ export const authService = {
     localStorage.removeItem("apex_user");
   },
 
-  // --- GESTION DES ÉQUIPES PAR ROUND ---
+  // Gestion des équipes
   saveTeam: async (driverIds: string[], round: string) => {
-    // Envoie le tableau JavaScript brut qui va être correctement traduit en TEXT ARRAY (_text) par Express et pg
     const res = await fetch(`${API_URL}/save-team`, {
       method: "POST",
       headers: getAuthHeaders(),
@@ -65,13 +64,15 @@ export const authService = {
       headers: getAuthHeaders(),
     });
     if (!res.ok) {
-      console.warn("⚠️ Impossible de lire les rounds configurés de l'utilisateur.");
+      console.warn(
+        "⚠️ Impossible de lire les rounds configurés de l'utilisateur.",
+      );
       return [];
     }
     return res.json();
   },
 
-  // --- HISTORIQUE ET CLASSEMENTS ---
+  // Historique et classement
   getSelectedRanking: async () => {
     const res = await fetch(`${API_URL}/api/results/user/selected-ranking`, {
       method: "GET",
@@ -85,46 +86,57 @@ export const authService = {
   },
 
   getUserRoundDetails: async (round: string) => {
-    const res = await fetch(`${API_URL}/api/results/user/round-details/${round}`, {
-      method: "GET",
-      headers: getAuthHeaders(),
-    });
-    
-    // Évite de bloquer l'application en cas de retour d'erreur (403, 404, 500)
+    const res = await fetch(
+      `${API_URL}/api/results/user/round-details/${round}`,
+      {
+        method: "GET",
+        headers: getAuthHeaders(),
+      },
+    );
+
     if (!res.ok) {
-      console.error(`❌ Échec de la récupération des scores pour le Round ${round}`);
+      console.error(
+        `❌ Échec de la récupération des scores pour le Round ${round}`,
+      );
       return { totalScore: 0, driversDetails: [] };
     }
-    
+
     return res.json();
   },
 
-  // --- CLASSEMENTS UTILISATEURS (LEADERBOARD) ---
+  // Classement utilisateur
   getSeasonLeaderboard: async () => {
     const res = await fetch(`${API_URL}/api/results/leaderboard/season`, {
       method: "GET",
       headers: getAuthHeaders(),
     });
     if (!res.ok) {
-      console.error("❌ Échec de la récupération du classement général de la saison");
+      console.error(
+        "❌ Échec de la récupération du classement général de la saison",
+      );
       return [];
     }
     return res.json();
   },
 
   getRoundLeaderboard: async (round: string) => {
-    const res = await fetch(`${API_URL}/api/results/leaderboard/round/${round}`, {
-      method: "GET",
-      headers: getAuthHeaders(),
-    });
+    const res = await fetch(
+      `${API_URL}/api/results/leaderboard/round/${round}`,
+      {
+        method: "GET",
+        headers: getAuthHeaders(),
+      },
+    );
     if (!res.ok) {
-      console.error(`❌ Échec de la récupération du classement pour le Round ${round}`);
+      console.error(
+        `❌ Échec de la récupération du classement pour le Round ${round}`,
+      );
       return [];
     }
     return res.json();
   },
 
-  // --- ADMIN ---
+  // Admi
   syncF1Data: async (round: string) => {
     const res = await fetch(`${API_URL}/admin/sync-data`, {
       method: "POST",
@@ -132,5 +144,5 @@ export const authService = {
       body: JSON.stringify({ round }),
     });
     return res.json();
-  }
+  },
 };

@@ -1,5 +1,3 @@
-// frontend/src/components/fantasy/ScoreCard.tsx
-
 import React from "react";
 import { PointDetail } from "../../types/ScoreDetail";
 
@@ -22,7 +20,6 @@ const ScoreCard: React.FC<ScoreCardProps> = ({ detail }) => {
 
   return (
     <div className="bg-gradient-to-b from-slate-900 to-slate-900/80 text-white rounded-xl shadow-2xl overflow-hidden border border-slate-800 w-full max-w-md relative group hover:border-slate-700 transition-all duration-300">
-      {/* En-tête : Structure de télémétrie asymétrique */}
       <div className="relative bg-gradient-to-r from-red-700 to-red-600 p-5 flex justify-between items-center overflow-hidden border-b-2 border-red-900">
         <div className="absolute inset-0 opacity-[0.05] bg-[repeating-linear-gradient(-45deg,transparent,transparent_5px,#fff_5px,#fff_10px)]" />
 
@@ -92,7 +89,7 @@ const ScoreCard: React.FC<ScoreCardProps> = ({ detail }) => {
             </span>
           </div>
 
-          {/* Ligne : Bonus Exploit (Underdog) */}
+          {/* Ligne : Bonus Exploit */}
           {detail.bonus_exploit !== undefined &&
             detail.bonus_exploit !== null &&
             Number(detail.bonus_exploit) > 0 && (

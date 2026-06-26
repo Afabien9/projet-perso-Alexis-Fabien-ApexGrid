@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { authService } from "../services/api";
-import { supabase } from "../services/supabaseClient"; // Assure-toi d'importer ton client supabase
+import { supabase } from "../services/supabaseClient";
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState<boolean>(true);
@@ -11,10 +11,9 @@ export default function AuthPage() {
     password: "",
   });
 
-  // Nouvelle fonction Magic Link
   const handleMagicLink = async () => {
     if (!formData.email) return alert("Veuillez entrer votre email");
-    
+
     setLoading(true);
     const { error } = await supabase.auth.signInWithOtp({
       email: formData.email,
@@ -22,7 +21,7 @@ export default function AuthPage() {
         emailRedirectTo: window.location.origin,
       },
     });
-    
+
     setLoading(false);
     if (error) alert(error.message);
     else alert("Un lien de connexion a été envoyé à votre boîte mail !");
@@ -50,7 +49,9 @@ export default function AuthPage() {
         }
       }
     } catch (error) {
-      alert("Une erreur est survenue lors de la communication avec le serveur.");
+      alert(
+        "Une erreur est survenue lors de la communication avec le serveur.",
+      );
     }
   };
 
@@ -69,7 +70,6 @@ export default function AuthPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="p-8 space-y-5">
-          {/* ... tes inputs restent identiques ... */}
           {!isLogin && (
             <input
               type="text"
@@ -77,7 +77,9 @@ export default function AuthPage() {
               required
               className="w-full bg-slate-950 border border-slate-800 p-3 rounded-lg text-white font-mono text-sm"
               value={formData.username}
-              onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, username: e.target.value })
+              }
             />
           )}
           <input
@@ -86,7 +88,9 @@ export default function AuthPage() {
             required
             className="w-full bg-slate-950 border border-slate-800 p-3 rounded-lg text-white font-mono text-sm"
             value={formData.email}
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, email: e.target.value })
+            }
           />
           <input
             type="password"
@@ -94,7 +98,9 @@ export default function AuthPage() {
             required
             className="w-full bg-slate-950 border border-slate-800 p-3 rounded-lg text-white font-mono text-sm"
             value={formData.password}
-            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, password: e.target.value })
+            }
           />
 
           <button
@@ -111,9 +117,11 @@ export default function AuthPage() {
             onClick={() => setIsLogin(!isLogin)}
             className="text-slate-400 text-[10px] font-bold uppercase hover:text-red-400"
           >
-            {isLogin ? "― Pas encore de compte ? Créer une écurie" : "― Déjà membre ? Se connecter"}
+            {isLogin
+              ? "― Pas encore de compte ? Créer une écurie"
+              : "― Déjà membre ? Se connecter"}
           </button>
-          
+
           {isLogin && (
             <button
               type="button"

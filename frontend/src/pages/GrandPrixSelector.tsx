@@ -1,5 +1,3 @@
-// frontend/src/components/fantasy/GrandPrixSelector.tsx
-
 import React, { useEffect, useState } from "react";
 
 interface GrandPrix {
@@ -74,7 +72,6 @@ export const GrandPrixSelector: React.FC<GrandPrixSelectorProps> = ({
 
   return (
     <div className="w-full bg-slate-950 text-white p-4 md:p-10 font-sans">
-      {/* RETOUR TECHNIQUE STYLE PADDOCK */}
       <div className="max-w-6xl mx-auto mb-6">
         <button
           onClick={onBack}

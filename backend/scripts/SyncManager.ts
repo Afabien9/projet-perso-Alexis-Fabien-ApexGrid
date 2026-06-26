@@ -7,7 +7,7 @@ import { db } from '../src/config/ds.js';
 import axios from 'axios';
 
 async function runSync() {
-  // Extraction du paramètre --round passé en commande npm
+  // Extraction du paramètre --round
   const args = process.argv.slice(2);
   const roundArg = args.find(arg => arg.startsWith('--round='))?.split('=')[1];
   
@@ -19,14 +19,14 @@ async function runSync() {
   console.log(`--- 🏁 DÉBUT SYNCHRONISATION APEXGRID SUR BDD (Round ${roundArg}) ---`);
 
   try {
-    // 1. MISE À JOUR DE L'ÉLITE (Top 5 mondial) DANS LE CONFIG DE SAISON
+    // Mise à jours des pilotes élites
     console.log("🔍 Identification de l'élite actuelle...");
     const eliteIds: string[] = await bigFive();
     
-    // Normalisation en minuscules pour éviter les pièges de casse
+    // Normalisation en minuscules
     const normalizedElite = eliteIds.map(id => id.toLowerCase());
 
-    // Le driver pg convertit un Array JS directement au format TEXT ARRAY (_text) de Postgres
+    // Le driver pg convertit un Array JS directement au format TEXT ARRAY de Postgres
     await db.query(`
       INSERT INTO public.season_config (round, key, value, updated_at)
       VALUES ($1, 'elite_ids', $2, NOW())
@@ -35,7 +35,7 @@ async function runSync() {
     `, [roundArg, normalizedElite]);
     console.log(`✅ Élite synchronisée en BDD : ${normalizedElite.join(', ')}`);
 
-    // 2. MISE À JOUR DU FOND DE GRILLE (3 dernières écuries) DANS LE CONFIG DE SAISON
+    // Mise à jours des équipes en fond de grilles
     console.log("🔍 Identification du fond de grille actuel...");
     const bottomIds: string[] = await getBottomTeams();
     
@@ -50,7 +50,7 @@ async function runSync() {
     `, [roundArg, normalizedBottom]);
     console.log(`✅ Fond de grille synchronisé en BDD : ${normalizedBottom.join(', ')}`);
 
-    // 3. RÉCUPÉRATION ET SAUVEGARDE DES RÉSULTATS DE COURSE
+    // Sauvegarde des résultats de la course
     console.log(`📥 Téléchargement des résultats du Round ${roundArg}...`);
     const raceResults: RaceResult[] = await getRaceResult("2026", roundArg);
     
@@ -58,11 +58,11 @@ async function runSync() {
       console.log(`📥 Sauvegarde de sécurité des ${raceResults.length} résultats de pilotes dans la table public.race_results...`);
       
       for (const driverResult of raceResults) {
-        // Sécurité cruciale anti-NaN pour les abandons (ex: position "R" ou "D")
+        // Sécurité anti-NaN pour les abandon
         const positionVal = isNaN(Number(driverResult.position)) ? 20 : Number(driverResult.position);
         const gridVal = isNaN(Number(driverResult.grid)) ? 20 : Number(driverResult.grid);
         
-        // Validation stricte de l'entrée dans les points (Top 10)
+        // Validation stricte de l'entrée dans les points
         const isPointsVal = positionVal <= 10;
 
         try {
@@ -96,9 +96,8 @@ async function runSync() {
       throw new Error(`Aucun résultat trouvé pour le round ${roundArg}`);
     }
 
-    // =========================================================================
-    // 4. CALCUL AUTOMATIQUE ET SYNCHRONISATION DES SCORES EN BDD (POSTGRESQL)
-    // =========================================================================
+    // Calcul et synchro des score en BDD
+  
     console.log(`📊 Calcul des scores des managers pour le Round ${roundArg}...`);
 
     // Récupération de tous les alignements d'écuries verrouillés par les utilisateurs
@@ -122,14 +121,14 @@ async function runSync() {
 
         let userRoundTotal = 0;
 
-        // Évaluation de chaque pilote sélectionné par le manager
+        // Évaluation de chaque pilote sélectionné
         parsedDriverIds.forEach((driverId: string) => {
           const driverData = raceResults.find(
             (r) => r.driverId.toLowerCase() === driverId.toLowerCase()
           );
 
           if (driverData) {
-            // Utilisation stricte de tes fonctions de calcul TypeScript
+            // Utilisation des fonctions de calcul
             const base = ScoringEngine.calculateUserPoints(driverData, normalizedElite);
             const overtake = ScoringEngine.calculateOvertakeBonus(driverData);
             const teamMate = ScoringEngine.calculateTeamMateBonus(driverData, raceResults);
@@ -139,10 +138,10 @@ async function runSync() {
           }
         });
 
-        // Protection anti-négatif globale
+        // Protection anti-négatif 
         userRoundTotal = Math.max(0, userRoundTotal);
 
-        // Insertion ou mise à jour (Upsert) pour écraser les anciennes valeurs
+        // Insertion ou mise à jour pour écraser les anciennes valeurs
         await db.query(`
           INSERT INTO public.user_scores (user_id, round, points, updated_at)
           VALUES ($1, $2, $3, NOW())
@@ -154,7 +153,6 @@ async function runSync() {
       }
     }
 
-    // 5. AFFICHAGE DU LOG DE SUIVI DANS LA CONSOLE
     const syncLog = {
       last_sync: new Date().toISOString(),
       round_synchronized: roundArg,
@@ -165,7 +163,7 @@ async function runSync() {
     console.log("--- ✨ TOUTES LES DONNÉES SONT À JOUR DIRECTEMENT EN BDD ---");
     console.table(syncLog);
     
-    // Notification WebSocket via Webhook
+    // Notification WebSocket
     try {
         await axios.post('http://localhost:3000/api/sync-notify', { round: roundArg });
         console.log("🔔 Notification WebSocket envoyée.");

@@ -1,5 +1,3 @@
-// frontend/src/pages/HistoryPage.tsx
-
 import React, { useEffect, useState } from "react";
 import { authService } from "../services/api.js";
 import ScoreCard from "../components/fantasy/ScoreCard.js";
@@ -39,7 +37,6 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({
   );
   const [loadingModal, setLoadingModal] = useState<boolean>(false);
 
-  // Valeur dynamique récupérée depuis le backend
   const [lastSyncedRound, setLastSyncedRound] = useState<number>(0);
 
   useEffect(() => {
@@ -48,13 +45,13 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({
       setError(null);
 
       try {
-        // 1. Récupération du calendrier
+        // Récupération du calendrier
         const resCalendar = await fetch("http://localhost:3000/api/calendar");
         if (!resCalendar.ok) throw new Error("Erreur calendrier");
         const calendarData = await resCalendar.json();
         setCalendar(calendarData);
 
-        // 2. Récupération dynamique du dernier round synchronisé
+        // Récupération du dernier round synchronisé
         const resSync = await fetch(
           "http://localhost:3000/api/last-synced-round",
         );
@@ -63,7 +60,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({
           setLastSyncedRound(syncData.lastSyncedRound);
         }
 
-        // 3. Récupération des rounds configurés
+        // Récupération des rounds configurés
         const roundsData = await authService.getMyTeamsRounds();
         if (Array.isArray(roundsData)) {
           setConfiguredRounds(

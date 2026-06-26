@@ -1,5 +1,3 @@
-// frontend/src/constants/drivers.ts
-
 export const DRIVERS_CONFIG = [
   // --- TOP TIERS (Leaders du classement) ---
   { id: "norris", name: "Lando Norris", team: "McLaren", price: 35, image: "/src/assets/img/Norris.webp" },
